@@ -1,6 +1,6 @@
 const API_BASE = "https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io"
 
-
+const API_URL = `${API_BASE}/api/employees`;
 const AUDIT_API_URL = `${API_BASE}/api/audit-logs`;
 
 const employeeForm = document.getElementById("employeeForm");
@@ -224,7 +224,7 @@ async function loadCurrentUser() {
       document.getElementById("welcomeText").textContent =
         `Welkom, ${data.user.name}`;
     } else {
-      window.location.href = "http://localhost:5001/login";
+      window.location.href = `${API_BASE}/login`;  
     }
 
   } catch (error) {
