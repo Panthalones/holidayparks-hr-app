@@ -13,6 +13,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
+
 app.config["SECRET_KEY"] = os.getenv(
     "SECRET_KEY",
     "HolidayParks-HR-Secret"
@@ -32,6 +33,9 @@ CORS(
 TENANT_ID = os.getenv("TENANT_ID")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL",     "https://holidayparks-frontend.whitedune-b42d430c.swedencentral.azurecontainerapps.io")
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL",     "https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io")
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 
@@ -66,7 +70,7 @@ def login():
 
     auth_url = build_msal_app().get_authorization_request_url(
         SCOPES,
-        redirect_uri="http://localhost:5001/getAToken",
+        redirect_uri=f"{BACKEND_BASE_URL}/getAToken",
         prompt="select_account"
     )
 
@@ -81,7 +85,7 @@ def authorized():
     result = build_msal_app().acquire_token_by_authorization_code(
         code,
         scopes=SCOPES,
-        redirect_uri="http://localhost:5001/getAToken"
+        redirect_uri=f"{BACKEND_BASE_URL}/getAToken"
     )
 
     if "id_token_claims" in result:
@@ -93,7 +97,7 @@ def authorized():
             )
         }
 
-        return redirect("http://localhost:5500/frontend/accounting.html")
+    return redirect(f"{FRONTEND_BASE_URL}/accounting.html")
         
 
     return jsonify({
@@ -124,7 +128,7 @@ def logout():
 
     return redirect(
         f"{AUTHORITY}/oauth2/v2.0/logout"
-        "?post_logout_redirect_uri=http://localhost:5001/login"
+        "?post_logout_redirect_uri={BACKEND_BASE_URL}/login"
     )
 
 @app.route("/api/health", methods=["GET"])
