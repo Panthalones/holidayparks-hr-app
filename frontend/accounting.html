@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fonteyn HR Portal</title>
+  <link rel="stylesheet" href="accounting.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <h1>Fonteyn HR Portal</h1>
+    <p>Central HR system for employee lifecycle management</p>
+  </div>
+
+  <div class="user-box">
+    <select id="languageSelect">
+      <option value="nl">NL</option>
+      <option value="en">EN</option>
+    </select>
+
+    <span id="welcomeText">Welkom, HR Admin</span>
+    <button id="logoutBtn">Uitloggen</button>
+  </div>
+</header>
+
+<main class="dashboard">
+
+  <section class="stats">
+    <div class="stat-card">
+      <h3 id="totalEmployees">0</h3>
+      <p>Totaal medewerkers</p>
+    </div>
+
+    <div class="stat-card">
+      <h3 id="activeEmployees">0</h3>
+      <p>Actieve medewerkers</p>
+    </div>
+
+    <div class="stat-card">
+      <h3>3</h3>
+      <p>Landen / locaties</p>
+    </div>
+
+    <div class="stat-card">
+      <h3>8</h3>
+      <p>Afdelingen</p>
+    </div>
+  </section>
+
+  <section class="form-container">
+    <h2>Nieuwe medewerker toevoegen</h2>
+    <p class="section-text">Gebruik dit formulier voor de instroomfase van het IDU-proces.</p>
+
+    <form id="employeeForm">
+      <input type="text" id="employeeName" placeholder="Volledige naam" required>
+      <input type="text" id="employeeFunction" placeholder="Functie" required>
+
+      <select id="employeeDepartment" required>
+        <option value="">Selecteer afdeling</option>
+        <option>Directie</option>
+        <option>HR</option>
+        <option>ICT & Security</option>
+        <option>Finance & Control</option>
+        <option>Operations</option>
+        <option>Sales & Marketing</option>
+        <option>Hospitality</option>
+        <option>Technische Dienst</option>
+        <option>Housekeeping</option>
+        <option>Recreation</option>
+        <option>Outdoor Activities</option>
+        <option>Security</option>
+      </select>
+
+      <select id="employeeLocation" required>
+        <option value="">Selecteer locatie</option>
+        <option>Fonteyn Veluwe</option>
+        <option>Fonteyn Ardennen</option>
+        <option>Fonteyn Eifel</option>
+      </select>
+
+      <button type="submit">Medewerker toevoegen</button>
+    </form>
+  </section>
+
+  <section class="table-section">
+    <div class="table-header">
+      <div>
+        <h2>Medewerkers overzicht</h2>
+        <p>Live data uit de MySQL database via de Flask API.</p>
+      </div>
+
+      <div class="filters">
+        <input type="text" id="searchInput" placeholder="Zoek medewerker...">
+
+        <select id="statusFilter">
+          <option value="all">Alle statussen</option>
+          <option value="Actief">Actief</option>
+          <option value="Inactief">Inactief</option>
+        </select>
+
+        <select id="departmentFilter">
+          <option value="all">Alle afdelingen</option>
+        </select>
+
+        <select id="locationFilter">
+          <option value="all">Alle locaties</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Naam</th>
+          <th>Functie</th>
+          <th>Afdeling</th>
+          <th>Locatie</th>
+          <th>Status</th>
+          <th>Acties</th>
+        </tr>
+      </thead>
+      <tbody id="employeeTable"></tbody>
+    </table>
+  </section>
+
+  <section class="table-section">
+    <div class="table-header">
+      <div>
+        <h2>IDU Proces</h2>
+        <p>Instroom, doorstroom en uitstroom van medewerkers.</p>
+      </div>
+    </div>
+
+    <div class="action-grid">
+      <div class="action-card">
+        <h3>Instroom</h3>
+        <p>Nieuwe medewerker registreren in het HR systeem.</p>
+      </div>
+
+      <div class="action-card">
+        <h3>Doorstroom</h3>
+        <p>Functie, afdeling of locatie van medewerker aanpassen.</p>
+      </div>
+
+      <div class="action-card">
+        <h3>Uitstroom</h3>
+        <p>Medewerker deactiveren en historie behouden.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="table-section">
+    <div class="table-header">
+      <div>
+        <h2>Audit logs</h2>
+        <p>Overzicht van belangrijke HR acties binnen het systeem.</p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Actie</th>
+          <th>Omschrijving</th>
+          <th>Uitgevoerd door</th>
+          <th>Tijdstip</th>
+        </tr>
+      </thead>
+      <tbody id="auditLogTable"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<script src="translations.js"></script>
+<script src="accounting.js"></script>
+<script src="filters.js"></script>
+
+</body>
+</html>

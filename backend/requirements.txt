@@ -1,0 +1,6 @@
+Flask
+Flask-Cors
+Flask-Session
+mysql-connector-python
+python-dotenv
+msal
