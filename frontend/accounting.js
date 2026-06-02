@@ -1,6 +1,6 @@
-const API_BASE = "http://localhost:5001";
+const API_BASE = "https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io"
 
-const API_URL = "const API_BASE = https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io";
+
 const AUDIT_API_URL = `${API_BASE}/api/audit-logs`;
 
 const employeeForm = document.getElementById("employeeForm");
@@ -206,7 +206,7 @@ async function deactivateEmployee(id){
 }
 
 document.getElementById("logoutBtn").addEventListener("click", function(){
-  window.location.href = "http://localhost:5001/logout";
+  window.location.href = `${API_BASE}/logout`;
 });
 
 async function loadCurrentUser() {
@@ -229,7 +229,7 @@ async function loadCurrentUser() {
 
   } catch (error) {
     console.error("Fout bij ophalen gebruiker:", error);
-    window.location.href = "http://localhost:5001/login";
+    window.location.href = `${API_BASE}/login`;
   }
 }
 
