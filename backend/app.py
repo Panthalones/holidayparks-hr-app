@@ -128,7 +128,7 @@ def logout():
 
     return redirect(
         f"{AUTHORITY}/oauth2/v2.0/logout"
-       f"?post_logout_redirect_uri={BACKEND_BASE_URL}/login"
+        "?post_logout_redirect_uri={BACKEND_BASE_URL}/login"
     )
 
 @app.route("/api/health", methods=["GET"])

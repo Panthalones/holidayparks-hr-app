@@ -48,4 +48,4 @@ jobs:
           az containerapp update \
             --name ${{ secrets.FRONTEND_CONTAINER_APP_NAME }} \
             --resource-group ${{ secrets.RESOURCE_GROUP }} \
-            --image ${{ secrets.ACR_LOGIN_SERVER }}/holidayparks-frontend:${{ github.sha }}
+            --image ${{ secrets.ACR_LOGIN_SERVER }}/holidayparks-frontend:${{ github.sha }} 
