@@ -1,6 +1,10 @@
 FROM nginx:alpine
 
-COPY . /usr/share/nginx/html
+COPY accounting.html /usr/share/nginx/html/index.html
+COPY accounting.css /usr/share/nginx/html/accounting.css
+COPY accounting.js /usr/share/nginx/html/accounting.js
+COPY filters.js /usr/share/nginx/html/filters.js
+COPY translations.js /usr/share/nginx/html/translations.js
 
 EXPOSE 80
 
