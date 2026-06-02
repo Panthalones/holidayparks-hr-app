@@ -97,7 +97,7 @@ def authorized():
             )
         }
 
-    return redirect(f"{FRONTEND_BASE_URL}/accounting.html")
+    return redirect(f"{FRONTEND_BASE_URL}")
         
 
     return jsonify({
