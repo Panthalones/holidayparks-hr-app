@@ -1,6 +1,6 @@
 const API_BASE = "http://localhost:5001";
 
-const API_URL = `${API_BASE}/api/employees`;
+const API_URL = "const API_BASE = https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io";
 const AUDIT_API_URL = `${API_BASE}/api/audit-logs`;
 
 const employeeForm = document.getElementById("employeeForm");
