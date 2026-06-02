@@ -11,7 +11,7 @@ const translations = {
     countriesLocations: "Landen / locaties",
     departments: "Afdelingen",
 
-    addEmployeeTitle: "Nieuwe medewerker toevoegen",
+    addEmployeeTitle: "Nieuwe medewerker toevoegen CI/CD test",
     addEmployeeText: "Gebruik dit formulier voor de instroomfase van het IDU-proces.",
     addButton: "Medewerker toevoegen",
 
@@ -59,7 +59,7 @@ const translations = {
     countriesLocations: "Countries / locations",
     departments: "Departments",
 
-    addEmployeeTitle: "Add new employee",
+    addEmployeeTitle: "Add new employee CI/CD test",
     addEmployeeText: "Use this form for the joiner phase of the IDU process.",
     addButton: "Add employee",
 
