@@ -8,8 +8,6 @@
 </head>
 <body>
 
-<h1>CI/CD TEST LIVE</h1>
-
 <header class="topbar">
   <div>
     <h1>Fonteyn HR Portal</h1>
@@ -93,6 +91,26 @@
       <button type="submit">Medewerker toevoegen</button>
     </form>
   </section>
+  
+   <section class="table-section">
+  <div class="table-header">
+    <div>
+      <h2>Entra ID gebruikers</h2>
+      <p>Gebruikers die vanuit on-prem AD zijn gesynchroniseerd naar Entra ID.</p>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Naam</th>
+        <th>Email</th>
+        <th>Entra ID</th>
+      </tr>
+    </thead>
+    <tbody id="entraUserTable"></tbody>
+  </table>
+</section>
 
   <section class="table-section">
     <div class="table-header">

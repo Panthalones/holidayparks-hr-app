@@ -2,6 +2,7 @@ const API_BASE = "https://holidayparks-backend.whitedune-b42d430c.swedencentral.
 
 const API_URL = `${API_BASE}/api/employees`;
 const AUDIT_API_URL = `${API_BASE}/api/audit-logs`;
+const ENTRA_USERS_URL = `${API_BASE}/api/entra-users`;
 
 const loginScreen = document.getElementById("loginScreen");
 const dashboardContent = document.getElementById("dashboardContent");
@@ -323,6 +324,7 @@ async function loadCurrentUser() {
       showDashboard();
       loadEmployees();
       loadAuditLogs();
+      loadEntraUsers();
     } else {
       console.log("Gebruiker niet geauthenticeerd");
       showLoginScreen();
@@ -332,6 +334,46 @@ async function loadCurrentUser() {
     console.error("Fout bij ophalen gebruiker:", error);
     showLoginScreen();
   }
+}
+
+async function loadEntraUsers() {
+
+  try {
+
+    const response = await fetch(ENTRA_USERS_URL, {
+      credentials: "include"
+    });
+
+    const users = await response.json();
+
+    const table = document.getElementById("entraUserTable");
+
+    if (!table) {
+      return;
+    }
+
+    table.innerHTML = "";
+
+    users.forEach(user => {
+
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${user.displayName || "-"}</td>
+        <td>${user.mail || user.userPrincipalName || "-"}</td>
+        <td>${user.id || "-"}</td>
+      `;
+
+      table.appendChild(row);
+
+    });
+
+  } catch (error) {
+
+    console.error("Fout bij ophalen Entra gebruikers:", error);
+
+  }
+
 }
 
 // Zorg ervoor dat het login-scherm zichtbaar is op het moment van laden
