@@ -381,58 +381,35 @@ function renderEntraUsers(usersToRender) {
 }
 
 renderEntraUsers(entraUsers);
-const searchInput = document.getElementById("searchInput");
+const nameFilter = document.getElementById("nameFilter");
+const departmentFilter = document.getElementById("departmentFilter");
+const functionFilter = document.getElementById("functionFilter");
+const locationFilter = document.getElementById("locationFilter");
 
-if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
+function applyEntraFilters() {
+  const nameValue = (nameFilter?.value || "").toLowerCase();
+  const departmentValue = (departmentFilter?.value || "").toLowerCase();
+  const functionValue = (functionFilter?.value || "").toLowerCase();
+  const locationValue = (locationFilter?.value || "").toLowerCase();
 
-        const searchValue = e.target.value.toLowerCase();
+  const filteredUsers = entraUsers.filter(user => {
+    const matchesName = (user.displayName || "").toLowerCase().includes(nameValue);
+    const matchesDepartment = (user.department || "").toLowerCase().includes(departmentValue);
+    const matchesFunction = (user.jobTitle || "").toLowerCase().includes(functionValue);
+    const matchesLocation = (user.officeLocation || "").toLowerCase().includes(locationValue);
 
-        const filteredUsers = entraUsers.filter(user =>
+    return matchesName && matchesDepartment && matchesFunction && matchesLocation;
+  });
 
-    (user.displayName || "")
-        .toLowerCase()
-        .includes(searchValue)
-
-    ||
-
-    (user.mail || user.userPrincipalName || "")
-        .toLowerCase()
-        .includes(searchValue)
-
-    ||
-
-    (user.department || "")
-        .toLowerCase()
-        .includes(searchValue)
-
-    ||
-
-    (user.officeLocation || "")
-        .toLowerCase()
-        .includes(searchValue)
-
-    ||
-
-    (user.jobTitle || "")
-        .toLowerCase()
-        .includes(searchValue)
-
-);
-
-        table.innerHTML = "";
-        renderEntraUsers(filteredUsers);
-
-    });
+  table.innerHTML = "";
+  renderEntraUsers(filteredUsers);
 }
 
-  } catch (error) {
-
-    console.error("Fout bij ophalen Entra gebruikers:", error);
-
+[nameFilter, departmentFilter, functionFilter, locationFilter].forEach(input => {
+  if (input) {
+    input.addEventListener("input", applyEntraFilters);
   }
-
-}
+});
 
 // Zorg ervoor dat het login-scherm zichtbaar is op het moment van laden
 showLoginScreen();
