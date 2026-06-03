@@ -95,6 +95,18 @@ body{
   cursor:pointer;
   font-size:16px;
   font-weight:bold;
+  width:100%;
+  transition:all 0.3s ease;
+}
+
+.login-card button:hover{
+  background:#15372a;
+  transform:scale(1.02);
+  box-shadow:0 8px 20px rgba(31, 77, 58, 0.3);
+}
+
+.login-card button:active{
+  transform:scale(0.98);
 }
 
 .stats{

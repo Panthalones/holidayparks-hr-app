@@ -3,7 +3,6 @@ const API_BASE = "https://holidayparks-backend.whitedune-b42d430c.swedencentral.
 const API_URL = `${API_BASE}/api/employees`;
 const AUDIT_API_URL = `${API_BASE}/api/audit-logs`;
 
-const loginBtn = document.getElementById("loginBtn");
 const loginScreen = document.getElementById("loginScreen");
 const dashboardContent = document.getElementById("dashboardContent");
 
@@ -61,10 +60,6 @@ function showDashboard() {
     logoutBtn.style.display = "inline-block";
   }
 }
-
-loginBtn.addEventListener("click", function() {
-  window.location.href = `${API_BASE}/login`;
-});
 
 async function loadEmployees(){
   try{
@@ -249,7 +244,6 @@ if (employeeForm) {
     }
   });
 }
-}
 
 async function deactivateEmployee(id){
   if(!confirm("Weet je zeker dat je deze medewerker wilt deactiveren?")){
@@ -312,6 +306,14 @@ async function loadCurrentUser() {
 
 // Zorg ervoor dat het login-scherm zichtbaar is op het moment van laden
 showLoginScreen();
+
+// Voeg event listener toe aan login knop
+const loginBtnElement = document.getElementById("loginBtn");
+if (loginBtnElement) {
+  loginBtnElement.addEventListener("click", function() {
+    window.location.href = `${API_BASE}/login`;
+  });
+}
 
 // Controleer authenticatie na een kleine vertraging om zeker te zijn dat DOM klaar is
 setTimeout(loadCurrentUser, 100);
