@@ -3,6 +3,8 @@ const departmentFilter = document.getElementById("departmentFilter");
 const locationFilter = document.getElementById("locationFilter");
 
 function populateDepartments(){
+  if (!departmentFilter) return;
+  
   const departments = [...new Set(employees.map(emp => emp.department))];
 
   departmentFilter.innerHTML = '<option value="all">Alle afdelingen</option>';
@@ -16,6 +18,8 @@ function populateDepartments(){
 }
 
 function populateLocations(){
+  if (!locationFilter) return;
+  
   const locations = [...new Set(employees.map(emp => emp.location))];
 
   locationFilter.innerHTML = '<option value="all">Alle locaties</option>';
@@ -29,6 +33,9 @@ function populateLocations(){
 }
 
 function applyFilters(){
+  const searchInput = document.getElementById("searchInput");
+  if (!searchInput || !statusFilter || !departmentFilter || !locationFilter) return;
+  
   const searchValue = searchInput.value.toLowerCase();
   const selectedStatus = statusFilter.value;
   const selectedDepartment = departmentFilter.value;
@@ -56,7 +63,8 @@ function applyFilters(){
   renderEmployees(filteredEmployees);
 }
 
-searchInput.addEventListener("input", applyFilters);
-statusFilter.addEventListener("change", applyFilters);
-departmentFilter.addEventListener("change", applyFilters);
-locationFilter.addEventListener("change", applyFilters);
+const searchInput = document.getElementById("searchInput");
+if (searchInput) searchInput.addEventListener("input", applyFilters);
+if (statusFilter) statusFilter.addEventListener("change", applyFilters);
+if (departmentFilter) departmentFilter.addEventListener("change", applyFilters);
+if (locationFilter) locationFilter.addEventListener("change", applyFilters);

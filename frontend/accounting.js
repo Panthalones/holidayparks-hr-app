@@ -3,10 +3,6 @@ const API_BASE = "https://holidayparks-backend.whitedune-b42d430c.swedencentral.
 const API_URL = `${API_BASE}/api/employees`;
 const AUDIT_API_URL = `${API_BASE}/api/audit-logs`;
 
-const employeeForm = document.getElementById("employeeForm");
-const employeeTable = document.getElementById("employeeTable");
-const auditLogTable = document.getElementById("auditLogTable");
-const searchInput = document.getElementById("searchInput");
 const loginBtn = document.getElementById("loginBtn");
 const loginScreen = document.getElementById("loginScreen");
 const dashboardContent = document.getElementById("dashboardContent");
@@ -16,6 +12,22 @@ const activeEmployees = document.getElementById("activeEmployees");
 
 let employees = [];
 let editingEmployeeId = null;
+
+function getEmployeeForm() {
+  return document.getElementById("employeeForm");
+}
+
+function getEmployeeTable() {
+  return document.getElementById("employeeTable");
+}
+
+function getAuditLogTable() {
+  return document.getElementById("auditLogTable");
+}
+
+function getSearchInput() {
+  return document.getElementById("searchInput");
+}
 
 function showLoginScreen() {
   if (loginScreen) loginScreen.style.display = "flex";
@@ -48,12 +60,14 @@ async function loadEmployees(){
 
   }catch(error){
     console.error("Fout bij ophalen medewerkers:", error);
-
-    employeeTable.innerHTML = `
-      <tr>
-        <td colspan="6">Kan medewerkers niet laden. Controleer of de Flask API draait.</td>
-      </tr>
-    `;
+    const employeeTable = getEmployeeTable();
+    if (employeeTable) {
+      employeeTable.innerHTML = `
+        <tr>
+          <td colspan="6">Kan medewerkers niet laden. Controleer of de Flask API draait.</td>
+        </tr>
+      `;
+    }
   }
 }
 
@@ -70,16 +84,21 @@ async function loadAuditLogs(){
 
   }catch(error){
     console.error("Fout bij ophalen audit logs:", error);
-
-    auditLogTable.innerHTML = `
-      <tr>
-        <td colspan="4">Kan audit logs niet laden. Controleer of de Flask API draait.</td>
-      </tr>
-    `;
+    const auditLogTable = getAuditLogTable();
+    if (auditLogTable) {
+      auditLogTable.innerHTML = `
+        <tr>
+          <td colspan="4">Kan audit logs niet laden. Controleer of de Flask API draait.</td>
+        </tr>
+      `;
+    }
   }
 }
 
 function renderAuditLogs(logs){
+  const auditLogTable = getAuditLogTable();
+  if (!auditLogTable) return;
+  
   auditLogTable.innerHTML = "";
 
   logs.forEach(log => {
@@ -97,6 +116,9 @@ function renderAuditLogs(logs){
 }
 
 function renderEmployees(data){
+  const employeeTable = getEmployeeTable();
+  if (!employeeTable) return;
+  
   employeeTable.innerHTML = "";
 
   data.forEach(employee => {
@@ -155,55 +177,61 @@ function editEmployee(id, name, functionName, department, location, status){
 }
 
 function updateStats(){
-  totalEmployees.textContent = employees.length;
-  activeEmployees.textContent = employees.filter(emp => emp.status === "Actief").length;
+  const total = document.getElementById("totalEmployees");
+  const active = document.getElementById("activeEmployees");
+  if (total) total.textContent = employees.length;
+  if (active) active.textContent = employees.filter(emp => emp.status === "Actief").length;
 }
 
-employeeForm.addEventListener("submit", async function(e){
-  e.preventDefault();
+const employeeForm = getEmployeeForm();
+if (employeeForm) {
+  employeeForm.addEventListener("submit", async function(e){
+    e.preventDefault();
 
-  const employeeData = {
-    name: document.getElementById("employeeName").value,
-    function: document.getElementById("employeeFunction").value,
-    department: document.getElementById("employeeDepartment").value,
-    location: document.getElementById("employeeLocation").value
-  };
+    const employeeData = {
+      name: document.getElementById("employeeName").value,
+      function: document.getElementById("employeeFunction").value,
+      department: document.getElementById("employeeDepartment").value,
+      location: document.getElementById("employeeLocation").value
+    };
 
-  if(editingEmployeeId){
-    employeeData.status = "Actief";
-  }
-
-  try{
-    const response = await fetch(
-      editingEmployeeId ? `${API_URL}/${editingEmployeeId}` : API_URL,
-      {
-        method: editingEmployeeId ? "PUT" : "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(employeeData)
-      }
-    );
-
-    if(response.ok){
-      employeeForm.reset();
-      editingEmployeeId = null;
-
-      loadEmployees();
-      loadAuditLogs();
-
-    }else{
-      const errorData = await response.json();
-      console.error("API error:", errorData);
-      alert("Medewerker kon niet worden opgeslagen.");
+    if(editingEmployeeId){
+      employeeData.status = "Actief";
     }
 
-  }catch(error){
-    console.error("Fout bij opslaan medewerker:", error);
-    alert("Geen verbinding met de Flask API.");
-  }
-});
+    try{
+      const response = await fetch(
+        editingEmployeeId ? `${API_URL}/${editingEmployeeId}` : API_URL,
+        {
+          method: editingEmployeeId ? "PUT" : "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(employeeData)
+        }
+      );
+
+      if(response.ok){
+        employeeForm.reset();
+        editingEmployeeId = null;
+
+        loadEmployees();
+        loadAuditLogs();
+
+      }else{
+        const errorData = await response.json();
+        console.error("API error:", errorData);
+        alert("Medewerker kon niet worden opgeslagen.");
+      }
+
+    }catch(error){
+      console.error("Fout bij opslaan medewerker:", error);
+      alert("Geen verbinding met de Flask API.");
+    }
+  });
+}
+}
 
 async function deactivateEmployee(id){
   if(!confirm("Weet je zeker dat je deze medewerker wilt deactiveren?")){
@@ -229,9 +257,12 @@ async function deactivateEmployee(id){
   }
 }
 
-document.getElementById("logoutBtn").addEventListener("click", function(){
-  window.location.href = `${API_BASE}/logout`;
-});
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", function(){
+    window.location.href = `${API_BASE}/logout`;
+  });
+}
 
 async function loadCurrentUser() {
   try {
