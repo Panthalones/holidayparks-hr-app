@@ -347,6 +347,9 @@ async function loadEntraUsers() {
     const users = await response.json();
 
     entraUsers = users;
+    
+    document.getElementById("totalEmployees").textContent = users.length;
+    document.getElementById("activeEmployees").textContent = users.length;
 
     const table = document.getElementById("entraUserTable");
 
