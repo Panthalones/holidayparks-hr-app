@@ -164,6 +164,12 @@ function renderEmployees(data){
         </button>
 
         <button
+          class="delete-btn"
+          onclick="deleteEmployee(${employee.id})">
+          Verwijder
+        </button>
+
+        <button
           class="deactivate-btn"
           onclick="deactivateEmployee(${employee.id})">
           Deactiveer
@@ -265,6 +271,30 @@ async function deactivateEmployee(id){
 
   }catch(error){
     console.error("Fout bij deactiveren medewerker:", error);
+    alert("Geen verbinding met de Flask API.");
+  }
+}
+
+async function deleteEmployee(id){
+  if(!confirm("Weet je zeker dat je deze medewerker permanent wilt verwijderen?")){
+    return;
+  }
+
+  try{
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+
+    if(response.ok){
+      loadEmployees();
+      loadAuditLogs();
+    }else{
+      alert("Medewerker kon niet worden verwijderd.");
+    }
+
+  }catch(error){
+    console.error("Fout bij verwijderen medewerker:", error);
     alert("Geen verbinding met de Flask API.");
   }
 }

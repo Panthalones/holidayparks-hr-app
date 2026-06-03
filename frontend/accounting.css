@@ -139,6 +139,16 @@ body{
   overflow-x:auto;
 }
 
+.delete-btn{
+  background:#ffe0e0;
+  color:#b42318;
+  border:none;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
 .section-text{
   margin-top:8px;
   color:#5f6b66;

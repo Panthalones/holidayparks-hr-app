@@ -346,6 +346,58 @@ def deactivate_employee(id):
             "details": str(e)
         }), 500
     
+@app.route("/api/employees/<int:id>", methods=["DELETE"])
+def delete_employee(id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            "SELECT name FROM employees WHERE id = %s",
+            (id,)
+        )
+
+        employee = cursor.fetchone()
+
+        if not employee:
+            cursor.close()
+            conn.close()
+
+            return jsonify({
+                "error": "Employee not found"
+            }), 404
+
+        cursor.execute(
+            "DELETE FROM employees WHERE id = %s",
+            (id,)
+        )
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        create_audit_log(
+            "Employee deleted",
+            f"Employee '{employee['name']}' was permanently deleted."
+        )
+
+        return jsonify({
+            "message": "Employee deleted successfully"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": "Database error",
+            "details": str(e)
+        }), 500
+
+    except Exception as e:
+        return jsonify({
+            "error": "Database error",
+            "details": str(e)
+        }), 500
+    
 @app.route("/api/audit-logs", methods=["GET"])
 def get_audit_logs():
     try:
