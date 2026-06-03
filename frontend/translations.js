@@ -115,7 +115,7 @@ function applyLanguage(lang){
   if (loginBtn) loginBtn.textContent = translations[lang].loginButton;
 
   // Header
-  document.getElementById("welcomeText").textContent = translations[lang].welcome;
+  //document.getElementById("welcomeText").textContent = translations[lang].welcome;
   document.getElementById("logoutBtn").textContent = translations[lang].logout;
 
   document.querySelector(".topbar h1").textContent = translations[lang].title;
