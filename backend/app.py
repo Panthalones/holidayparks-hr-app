@@ -5,6 +5,7 @@ from flask_session import Session
 import mysql.connector
 import msal
 import os
+import requests
 
 from dotenv import load_dotenv
 
@@ -145,6 +146,35 @@ def health_check():
         "auth": "Entra ID ready",
         "database": "MySQL"
     }), 200
+
+@app.route("/api/test-graph", methods=["GET"])
+def test_graph():
+
+    try:
+
+        token_result = build_msal_app().acquire_token_for_client(
+            scopes=["https://graph.microsoft.com/.default"]
+        )
+
+        if "access_token" not in token_result:
+            return jsonify({
+                "error": "Geen access token",
+                "details": token_result
+            }), 500
+
+        graph_response = requests.get(
+            "https://graph.microsoft.com/v1.0/users?$top=5",
+            headers={
+                "Authorization": f"Bearer {token_result['access_token']}"
+            }
+        )
+
+        return jsonify(graph_response.json())
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
 
 def get_performed_by():
     if session.get("user"):
