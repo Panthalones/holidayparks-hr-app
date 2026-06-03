@@ -194,4 +194,4 @@ languageSelect.addEventListener("change", function(){
   applyLanguage(languageSelect.value);
 });
 
-applyLanguage("nl");
+// applyLanguage("nl");
