@@ -147,7 +147,7 @@ def health_check():
         "database": "MySQL"
     }), 200
 
-@app.route("/api/test-graph", methods=["GET"])
+@app.route("/api/entra-users", methods=["GET"])
 def test_graph():
 
     try:
