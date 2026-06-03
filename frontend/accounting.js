@@ -30,18 +30,36 @@ function getSearchInput() {
 }
 
 function showLoginScreen() {
-  if (loginScreen) loginScreen.style.display = "flex";
-  if (dashboardContent) dashboardContent.style.display = "none";
+  const loginScreen = document.getElementById("loginScreen");
+  const dashboardContent = document.getElementById("dashboardContent");
   const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) logoutBtn.style.display = "none";
+  
+  if (loginScreen) {
+    loginScreen.style.display = "flex";
+  }
+  if (dashboardContent) {
+    dashboardContent.style.display = "none";
+  }
+  if (logoutBtn) {
+    logoutBtn.style.display = "none";
+  }
   document.getElementById("welcomeText").textContent = "Welkom, gast";
 }
 
 function showDashboard() {
-  if (loginScreen) loginScreen.style.display = "none";
-  if (dashboardContent) dashboardContent.style.display = "";
+  const loginScreen = document.getElementById("loginScreen");
+  const dashboardContent = document.getElementById("dashboardContent");
   const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) logoutBtn.style.display = "";
+  
+  if (loginScreen) {
+    loginScreen.style.display = "none";
+  }
+  if (dashboardContent) {
+    dashboardContent.style.display = "block";
+  }
+  if (logoutBtn) {
+    logoutBtn.style.display = "inline-block";
+  }
 }
 
 loginBtn.addEventListener("click", function() {
@@ -282,6 +300,7 @@ async function loadCurrentUser() {
       loadEmployees();
       loadAuditLogs();
     } else {
+      console.log("Gebruiker niet geauthenticeerd");
       showLoginScreen();
     }
 
@@ -291,4 +310,8 @@ async function loadCurrentUser() {
   }
 }
 
-loadCurrentUser();
+// Zorg ervoor dat het login-scherm zichtbaar is op het moment van laden
+showLoginScreen();
+
+// Controleer authenticatie na een kleine vertraging om zeker te zijn dat DOM klaar is
+setTimeout(loadCurrentUser, 100);
