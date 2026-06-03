@@ -151,7 +151,6 @@ def health_check():
 def test_graph():
 
     try:
-
         token_result = build_msal_app().acquire_token_for_client(
             scopes=["https://graph.microsoft.com/.default"]
         )
@@ -162,14 +161,29 @@ def test_graph():
                 "details": token_result
             }), 500
 
-        graph_response = requests.get(
-            "https://graph.microsoft.com/v1.0/users?$select=id,displayName,mail,userPrincipalName",
-            headers={
-                "Authorization": f"Bearer {token_result['access_token']}"
-            }
+        users = []
+
+        graph_url = (
+            "https://graph.microsoft.com/v1.0/users"
+            "?$select=id,displayName,mail,userPrincipalName"
+            "&$top=999"
         )
 
-        return jsonify(graph_response.json())
+        while graph_url:
+            graph_response = requests.get(
+                graph_url,
+                headers={
+                    "Authorization": f"Bearer {token_result['access_token']}"
+                }
+            )
+
+            data = graph_response.json()
+
+            users.extend(data.get("value", []))
+
+            graph_url = data.get("@odata.nextLink")
+
+        return jsonify(users)
 
     except Exception as e:
         return jsonify({
