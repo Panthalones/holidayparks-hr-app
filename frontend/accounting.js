@@ -7,6 +7,10 @@ const employeeForm = document.getElementById("employeeForm");
 const employeeTable = document.getElementById("employeeTable");
 const auditLogTable = document.getElementById("auditLogTable");
 const searchInput = document.getElementById("searchInput");
+const loginBtn = document.getElementById("loginBtn");
+const loginScreen = document.getElementById("loginScreen");
+const dashboardContent = document.getElementById("dashboardContent");
+const logoutBtn = document.getElementById("logoutBtn");
 
 const totalEmployees = document.getElementById("totalEmployees");
 const activeEmployees = document.getElementById("activeEmployees");
@@ -14,9 +18,26 @@ const activeEmployees = document.getElementById("activeEmployees");
 let employees = [];
 let editingEmployeeId = null;
 
+function showLoginScreen() {
+  loginScreen.style.display = "flex";
+  dashboardContent.style.display = "none";
+  logoutBtn.style.display = "none";
+  document.getElementById("welcomeText").textContent = "Welkom, gast";
+}
+
+function showDashboard() {
+  loginScreen.style.display = "none";
+  dashboardContent.style.display = "";
+  logoutBtn.style.display = "";
+}
+
+loginBtn.addEventListener("click", function() {
+  window.location.href = `${API_BASE}/login`;
+});
+
 async function loadEmployees(){
   try{
-    const response = await fetch(API_URL);
+    const response = await fetch(API_URL, { credentials: "include" });
     employees = await response.json();
 
     renderEmployees(employees);
@@ -37,7 +58,7 @@ async function loadEmployees(){
 
 async function loadAuditLogs(){
   try{
-    const response = await fetch(AUDIT_API_URL);
+    const response = await fetch(AUDIT_API_URL, { credentials: "include" });
 
     if(!response.ok){
       throw new Error("Audit API error");
@@ -156,6 +177,7 @@ employeeForm.addEventListener("submit", async function(e){
       editingEmployeeId ? `${API_URL}/${editingEmployeeId}` : API_URL,
       {
         method: editingEmployeeId ? "PUT" : "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json"
         },
@@ -189,7 +211,8 @@ async function deactivateEmployee(id){
 
   try{
     const response = await fetch(`${API_URL}/${id}/deactivate`, {
-      method: "PUT"
+      method: "PUT",
+      credentials: "include"
     });
 
     if(response.ok){
@@ -223,17 +246,17 @@ async function loadCurrentUser() {
     if (data.authenticated) {
       document.getElementById("welcomeText").textContent =
         `Welkom, ${data.user.name}`;
+      showDashboard();
+      loadEmployees();
+      loadAuditLogs();
     } else {
-      window.location.href = `${API_BASE}/login`;  
+      showLoginScreen();
     }
 
   } catch (error) {
     console.error("Fout bij ophalen gebruiker:", error);
-    window.location.href = `${API_BASE}/login`;
+    showLoginScreen();
   }
 }
 
 loadCurrentUser();
-
-loadEmployees();
-loadAuditLogs();
