@@ -369,6 +369,9 @@ function renderEntraUsers(usersToRender) {
         <td>${user.department || "-"}</td>
         <td>${user.officeLocation || "-"}</td>
         <td>${user.id || "-"}</td>
+        <td>
+            <button class="edit-btn">Bewerken</button>
+        </td>
       `;
 
       table.appendChild(row);
@@ -387,17 +390,35 @@ if (searchInput) {
 
         const filteredUsers = entraUsers.filter(user =>
 
-            (user.displayName || "")
-                .toLowerCase()
-                .includes(searchValue)
+    (user.displayName || "")
+        .toLowerCase()
+        .includes(searchValue)
 
-            ||
+    ||
 
-            (user.mail || user.userPrincipalName || "")
-                .toLowerCase()
-                .includes(searchValue)
+    (user.mail || user.userPrincipalName || "")
+        .toLowerCase()
+        .includes(searchValue)
 
-        );
+    ||
+
+    (user.department || "")
+        .toLowerCase()
+        .includes(searchValue)
+
+    ||
+
+    (user.officeLocation || "")
+        .toLowerCase()
+        .includes(searchValue)
+
+    ||
+
+    (user.jobTitle || "")
+        .toLowerCase()
+        .includes(searchValue)
+
+);
 
         table.innerHTML = "";
         renderEntraUsers(filteredUsers);
