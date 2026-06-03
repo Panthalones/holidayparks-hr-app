@@ -12,6 +12,7 @@ const activeEmployees = document.getElementById("activeEmployees");
 
 let employees = [];
 let editingEmployeeId = null;
+let entraUsers = [];
 
 function getEmployeeForm() {
   return document.getElementById("employeeForm");
@@ -344,6 +345,8 @@ async function loadEntraUsers() {
     });
 
     const users = await response.json();
+
+    entraUsers = users;
 
     const table = document.getElementById("entraUserTable");
 
