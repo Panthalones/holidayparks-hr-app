@@ -10,7 +10,6 @@ const searchInput = document.getElementById("searchInput");
 const loginBtn = document.getElementById("loginBtn");
 const loginScreen = document.getElementById("loginScreen");
 const dashboardContent = document.getElementById("dashboardContent");
-const logoutBtn = document.getElementById("logoutBtn");
 
 const totalEmployees = document.getElementById("totalEmployees");
 const activeEmployees = document.getElementById("activeEmployees");
@@ -19,16 +18,18 @@ let employees = [];
 let editingEmployeeId = null;
 
 function showLoginScreen() {
-  loginScreen.style.display = "flex";
-  dashboardContent.style.display = "none";
-  logoutBtn.style.display = "none";
+  if (loginScreen) loginScreen.style.display = "flex";
+  if (dashboardContent) dashboardContent.style.display = "none";
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.style.display = "none";
   document.getElementById("welcomeText").textContent = "Welkom, gast";
 }
 
 function showDashboard() {
-  loginScreen.style.display = "none";
-  dashboardContent.style.display = "";
-  logoutBtn.style.display = "";
+  if (loginScreen) loginScreen.style.display = "none";
+  if (dashboardContent) dashboardContent.style.display = "";
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.style.display = "";
 }
 
 loginBtn.addEventListener("click", function() {

@@ -2,6 +2,9 @@ const translations = {
   nl: {
     welcome: "Welkom, HR Admin",
     logout: "Uitloggen",
+    loginTitle: "Login met Entra ID",
+    loginText: "Je ziet eerst dit scherm voordat je toegang krijgt tot het personeelsdashboard.",
+    loginButton: "Login met Entra ID",
 
     title: "Fonteyn HR Portal",
     subtitle: "Centraal HR systeem voor employee lifecycle management",
@@ -50,6 +53,9 @@ const translations = {
   en: {
     welcome: "Welcome, HR Admin",
     logout: "Logout",
+    loginTitle: "Login with Entra ID",
+    loginText: "You will see this screen first before getting access to the employee dashboard.",
+    loginButton: "Login with Entra ID",
 
     title: "Fonteyn HR Portal",
     subtitle: "Central HR system for employee lifecycle management",
@@ -99,54 +105,89 @@ const translations = {
 const languageSelect = document.getElementById("languageSelect");
 
 function applyLanguage(lang){
+  // Login screen
+  const loginCardH2 = document.querySelector(".login-card h2");
+  const loginCardP = document.querySelector(".login-card p");
+  const loginBtn = document.getElementById("loginBtn");
+  
+  if (loginCardH2) loginCardH2.textContent = translations[lang].loginTitle;
+  if (loginCardP) loginCardP.textContent = translations[lang].loginText;
+  if (loginBtn) loginBtn.textContent = translations[lang].loginButton;
+
+  // Header
   document.getElementById("welcomeText").textContent = translations[lang].welcome;
   document.getElementById("logoutBtn").textContent = translations[lang].logout;
 
   document.querySelector(".topbar h1").textContent = translations[lang].title;
   document.querySelector(".topbar p").textContent = translations[lang].subtitle;
 
-  document.querySelectorAll(".stat-card p")[0].textContent = translations[lang].totalEmployees;
-  document.querySelectorAll(".stat-card p")[1].textContent = translations[lang].activeEmployees;
-  document.querySelectorAll(".stat-card p")[2].textContent = translations[lang].countriesLocations;
-  document.querySelectorAll(".stat-card p")[3].textContent = translations[lang].departments;
+  // Dashboard elements (only if visible)
+  const statCards = document.querySelectorAll(".stat-card p");
+  if (statCards.length >= 4) {
+    statCards[0].textContent = translations[lang].totalEmployees;
+    statCards[1].textContent = translations[lang].activeEmployees;
+    statCards[2].textContent = translations[lang].countriesLocations;
+    statCards[3].textContent = translations[lang].departments;
+  }
 
-  document.querySelector(".form-container h2").textContent = translations[lang].addEmployeeTitle;
-  document.querySelector(".form-container .section-text").textContent = translations[lang].addEmployeeText;
-  document.querySelector("button[type='submit']").textContent = translations[lang].addButton;
+  const formContainer = document.querySelector(".form-container");
+  if (formContainer) {
+    formContainer.querySelector("h2").textContent = translations[lang].addEmployeeTitle;
+    formContainer.querySelector(".section-text").textContent = translations[lang].addEmployeeText;
+    formContainer.querySelector("button[type='submit']").textContent = translations[lang].addButton;
+  }
 
-  document.querySelectorAll(".table-section h2")[0].textContent = translations[lang].employeeOverviewTitle;
-  document.querySelectorAll(".table-section p")[0].textContent = translations[lang].employeeOverviewText;
+  const tables = document.querySelectorAll(".table-section table");
+  if (tables.length >= 1) {
+    const employeeHeaders = tables[0].querySelectorAll("th");
+    if (employeeHeaders.length >= 6) {
+      employeeHeaders[0].textContent = translations[lang].tableName;
+      employeeHeaders[1].textContent = translations[lang].tableFunction;
+      employeeHeaders[2].textContent = translations[lang].tableDepartment;
+      employeeHeaders[3].textContent = translations[lang].tableLocation;
+      employeeHeaders[4].textContent = translations[lang].tableStatus;
+      employeeHeaders[5].textContent = translations[lang].tableActions;
+    }
+  }
 
-  document.getElementById("searchInput").placeholder = translations[lang].searchPlaceholder;
+  const tableSectionHeadings = document.querySelectorAll(".table-section h2");
+  if (tableSectionHeadings.length >= 3) {
+    tableSectionHeadings[0].textContent = translations[lang].employeeOverviewTitle;
+    tableSectionHeadings[1].textContent = translations[lang].iduTitle;
+    tableSectionHeadings[2].textContent = translations[lang].auditTitle;
+  }
 
-  const employeeHeaders = document.querySelectorAll(".table-section table")[0].querySelectorAll("th");
-  employeeHeaders[0].textContent = translations[lang].tableName;
-  employeeHeaders[1].textContent = translations[lang].tableFunction;
-  employeeHeaders[2].textContent = translations[lang].tableDepartment;
-  employeeHeaders[3].textContent = translations[lang].tableLocation;
-  employeeHeaders[4].textContent = translations[lang].tableStatus;
-  employeeHeaders[5].textContent = translations[lang].tableActions;
+  const tableSectionParagraphs = document.querySelectorAll(".table-section p");
+  if (tableSectionParagraphs.length >= 3) {
+    tableSectionParagraphs[0].textContent = translations[lang].employeeOverviewText;
+    tableSectionParagraphs[1].textContent = translations[lang].iduText;
+    tableSectionParagraphs[2].textContent = translations[lang].auditText;
+  }
 
-  document.querySelectorAll(".table-section h2")[1].textContent = translations[lang].iduTitle;
-  document.querySelectorAll(".table-section p")[1].textContent = translations[lang].iduText;
+  const searchInput = document.getElementById("searchInput");
+  if (searchInput) searchInput.placeholder = translations[lang].searchPlaceholder;
 
-  document.querySelectorAll(".action-card h3")[0].textContent = translations[lang].instroomTitle;
-  document.querySelectorAll(".action-card p")[0].textContent = translations[lang].instroomText;
+  const actionCards = document.querySelectorAll(".action-card");
+  if (actionCards.length >= 3) {
+    actionCards[0].querySelector("h3").textContent = translations[lang].instroomTitle;
+    actionCards[0].querySelector("p").textContent = translations[lang].instroomText;
+    
+    actionCards[1].querySelector("h3").textContent = translations[lang].doorstroomTitle;
+    actionCards[1].querySelector("p").textContent = translations[lang].doorstroomText;
+    
+    actionCards[2].querySelector("h3").textContent = translations[lang].uitstroomTitle;
+    actionCards[2].querySelector("p").textContent = translations[lang].uitstroomText;
+  }
 
-  document.querySelectorAll(".action-card h3")[1].textContent = translations[lang].doorstroomTitle;
-  document.querySelectorAll(".action-card p")[1].textContent = translations[lang].doorstroomText;
-
-  document.querySelectorAll(".action-card h3")[2].textContent = translations[lang].uitstroomTitle;
-  document.querySelectorAll(".action-card p")[2].textContent = translations[lang].uitstroomText;
-
-  document.querySelectorAll(".table-section h2")[2].textContent = translations[lang].auditTitle;
-  document.querySelectorAll(".table-section p")[2].textContent = translations[lang].auditText;
-
-  const auditHeaders = document.querySelectorAll(".table-section table")[1].querySelectorAll("th");
-  auditHeaders[0].textContent = translations[lang].auditAction;
-  auditHeaders[1].textContent = translations[lang].auditDescription;
-  auditHeaders[2].textContent = translations[lang].auditPerformedBy;
-  auditHeaders[3].textContent = translations[lang].auditTime;
+  if (tables.length >= 2) {
+    const auditHeaders = tables[1].querySelectorAll("th");
+    if (auditHeaders.length >= 4) {
+      auditHeaders[0].textContent = translations[lang].auditAction;
+      auditHeaders[1].textContent = translations[lang].auditDescription;
+      auditHeaders[2].textContent = translations[lang].auditPerformedBy;
+      auditHeaders[3].textContent = translations[lang].auditTime;
+    }
+  }
 }
 
 languageSelect.addEventListener("change", function(){
