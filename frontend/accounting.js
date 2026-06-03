@@ -411,6 +411,7 @@ function applyEntraFilters() {
   }
 });
 
+}
 // Zorg ervoor dat het login-scherm zichtbaar is op het moment van laden
 showLoginScreen();
 
@@ -424,4 +425,3 @@ if (loginBtnElement) {
 
 // Controleer authenticatie na een kleine vertraging om zeker te zijn dat DOM klaar is
 setTimeout(loadCurrentUser, 100);
-
