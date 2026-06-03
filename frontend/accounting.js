@@ -356,7 +356,9 @@ async function loadEntraUsers() {
 
     table.innerHTML = "";
 
-    users.forEach(user => {
+function renderEntraUsers(usersToRender) {
+    
+    usersToRender.forEach(user => {
 
       const row = document.createElement("tr");
 
@@ -369,6 +371,36 @@ async function loadEntraUsers() {
       table.appendChild(row);
 
     });
+
+}
+
+renderEntraUsers(entraUsers);
+const searchInput = document.getElementById("searchInput");
+
+if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+
+        const searchValue = e.target.value.toLowerCase();
+
+        const filteredUsers = entraUsers.filter(user =>
+
+            (user.displayName || "")
+                .toLowerCase()
+                .includes(searchValue)
+
+            ||
+
+            (user.mail || user.userPrincipalName || "")
+                .toLowerCase()
+                .includes(searchValue)
+
+        );
+
+        table.innerHTML = "";
+        renderEntraUsers(filteredUsers);
+
+    });
+}
 
   } catch (error) {
 
