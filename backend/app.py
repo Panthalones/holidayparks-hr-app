@@ -163,7 +163,7 @@ def test_graph():
             }), 500
 
         graph_response = requests.get(
-            "https://graph.microsoft.com/v1.0/users?$top=5",
+            "https://graph.microsoft.com/v1.0/users?$select=id,displayName,mail,userPrincipalName",
             headers={
                 "Authorization": f"Bearer {token_result['access_token']}"
             }
