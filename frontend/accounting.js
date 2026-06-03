@@ -322,7 +322,6 @@ async function loadCurrentUser() {
       document.getElementById("welcomeText").textContent =
         `Welkom, ${data.user.name}`;
       showDashboard();
-      loadEmployees();
       loadAuditLogs();
       loadEntraUsers();
     } else {

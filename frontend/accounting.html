@@ -96,7 +96,7 @@
   <div class="table-header">
     <div>
       <h2>Entra ID gebruikers</h2>
-      <p>Gebruikers die vanuit on-prem AD zijn gesynchroniseerd naar Entra ID.</p>
+      <p>Gebruikers gesynchroniseerd vanuit Active Directory naar Entra ID.</p>
     </div>
   </div>
 
@@ -111,47 +111,6 @@
     <tbody id="entraUserTable"></tbody>
   </table>
 </section>
-
-  <section class="table-section">
-    <div class="table-header">
-      <div>
-        <h2>Medewerkers overzicht</h2>
-        <p>Live data uit de MySQL database via de Flask API.</p>
-      </div>
-
-      <div class="filters">
-        <input type="text" id="searchInput" placeholder="Zoek medewerker...">
-
-        <select id="statusFilter">
-          <option value="all">Alle statussen</option>
-          <option value="Actief">Actief</option>
-          <option value="Inactief">Inactief</option>
-        </select>
-
-        <select id="departmentFilter">
-          <option value="all">Alle afdelingen</option>
-        </select>
-
-        <select id="locationFilter">
-          <option value="all">Alle locaties</option>
-        </select>
-      </div>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Naam</th>
-          <th>Functie</th>
-          <th>Afdeling</th>
-          <th>Locatie</th>
-          <th>Status</th>
-          <th>Acties</th>
-        </tr>
-      </thead>
-      <tbody id="employeeTable"></tbody>
-    </table>
-  </section>
 
   <section class="table-section">
     <div class="table-header">
