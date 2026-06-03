@@ -365,6 +365,9 @@ function renderEntraUsers(usersToRender) {
       row.innerHTML = `
         <td>${user.displayName || "-"}</td>
         <td>${user.mail || user.userPrincipalName || "-"}</td>
+        <td>${user.jobTitle || "-"}</td>
+        <td>${user.department || "-"}</td>
+        <td>${user.officeLocation || "-"}</td>
         <td>${user.id || "-"}</td>
       `;
 
