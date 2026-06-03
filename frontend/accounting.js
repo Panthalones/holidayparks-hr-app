@@ -370,7 +370,8 @@ function renderEntraUsers(usersToRender) {
         <td>${user.officeLocation || "-"}</td>
         <td>${user.id || "-"}</td>
         <td>
-            <button class="edit-btn">Bewerken</button>
+          <button class="edit-btn">Bewerken</button>
+          <button class="delete-btn">Verwijderen</button>
         </td>
       `;
 
