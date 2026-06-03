@@ -411,6 +411,9 @@ function applyEntraFilters() {
   }
 });
 
+  } catch (error) {
+    console.error("Fout bij ophalen Entra gebruikers:", error);
+  }
 }
 // Zorg ervoor dat het login-scherm zichtbaar is op het moment van laden
 showLoginScreen();
