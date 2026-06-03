@@ -165,7 +165,7 @@ def test_graph():
 
         graph_url = (
             "https://graph.microsoft.com/v1.0/users"
-            "?$select=id,displayName,mail,userPrincipalName"
+            "?$select=id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation"
             "&$top=999"
         )
 
