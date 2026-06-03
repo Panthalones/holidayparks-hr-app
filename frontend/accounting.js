@@ -9,16 +9,7 @@ const dashboardContent = document.getElementById("dashboardContent");
 const totalEmployees = document.getElementById("totalEmployees");
 const activeEmployees = document.getElementById("activeEmployees");
 
-let employees = [
-  {
-    id: 999,
-    name: "Test Gebruiker",
-    function_name: "HR Manager",
-    department: "HR",
-    location: "Fonteyn Veluwe",
-    status: "Actief"
-  }
-];
+let employees = [];
 let editingEmployeeId = null;
 
 function getEmployeeForm() {
@@ -357,5 +348,3 @@ if (loginBtnElement) {
 // Controleer authenticatie na een kleine vertraging om zeker te zijn dat DOM klaar is
 setTimeout(loadCurrentUser, 100);
 
-renderEmployees(employees);
-updateStats();
