@@ -21,12 +21,11 @@ app.config["SECRET_KEY"] = os.getenv(
 
 app.config["SESSION_TYPE"] = "filesystem"
 
-Session(app)
+# Ensure session cookies work for cross-site requests (required for frontend -> backend credentials)
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 
-CORS(
-    app,
-    supports_credentials=True
-)
+Session(app)
 
 
 # Entra ID configuration
@@ -42,6 +41,13 @@ AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
 SCOPES = [
     "User.Read"
 ]
+
+# Configure CORS to allow the frontend origin and credentials (cookies)
+CORS(
+    app,
+    supports_credentials=True,
+    resources={r"/*": {"origins": FRONTEND_BASE_URL}}
+)
 
 
 # MySQL configuration
