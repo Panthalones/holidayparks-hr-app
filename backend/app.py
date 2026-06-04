@@ -240,6 +240,52 @@ def deactivate_entra_user(user_id):
             "error": str(e)
         }), 500  
 
+@app.route("/api/entra-users/<user_id>", methods=["PATCH"])
+def update_entra_user(user_id):
+    try:
+        data = request.get_json()
+
+        update_data = {
+            "displayName": data.get("displayName"),
+            "jobTitle": data.get("jobTitle"),
+            "department": data.get("department"),
+            "officeLocation": data.get("officeLocation")
+        }
+
+        update_data = {
+            key: value for key, value in update_data.items()
+            if value is not None
+        }
+
+        access_token, error = get_graph_access_token()
+
+        if error:
+            return jsonify({
+                "error": "Geen access token",
+                "details": error
+            }), 500
+
+        graph_response = requests.patch(
+            f"https://graph.microsoft.com/v1.0/users/{user_id}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            },
+            json=update_data
+        )
+
+        if graph_response.status_code not in [200, 204]:
+            return jsonify(graph_response.json()), graph_response.status_code
+
+        return jsonify({
+            "message": "Entra user updated successfully"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
+
 def get_performed_by():
     if session.get("user"):
         return session["user"].get("email", "Unknown user")

@@ -328,6 +328,21 @@ async function deactivateEntraUser(userId){
   }
 }
 
+function editEntraUser(userId, displayName, jobTitle, department, officeLocation){
+  const newDisplayName = prompt("Naam:", displayName);
+  const newJobTitle = prompt("Functie:", jobTitle);
+  const newDepartment = prompt("Afdeling:", department);
+  const newOfficeLocation = prompt("Locatie:", officeLocation);
+
+  console.log("Edit Entra user:", {
+    userId,
+    newDisplayName,
+    newJobTitle,
+    newDepartment,
+    newOfficeLocation
+  });
+}
+
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", function(){
@@ -400,7 +415,15 @@ function renderEntraUsers(usersToRender) {
         <td>${user.officeLocation || "-"}</td>
         <td>${user.id || "-"}</td>
         <td>
-          <button class="edit-btn">Bewerken</button>
+          <button class="edit-btn"onclick="editEntraUser(
+            '${user.id}',
+            '${user.displayName || ""}',
+            '${user.jobTitle || ""}',
+            '${user.department || ""}',
+            '${user.officeLocation || ""}'
+          )">
+          Bewerken
+          </button>
           <button class="delete-btn" onclick="deactivateEntraUser('${user.id}')">Deactiveren</button>
         </td>
       `;
