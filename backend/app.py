@@ -225,10 +225,11 @@ def deactivate_entra_user(user_id):
         if graph_response.status_code not in [200, 204]:
             return jsonify(graph_response.json()), graph_response.status_code
 
-        create_audit_log(
-            "Entra user deactivated",
-            f"Entra ID user with ID '{user_id}' was deactivated."
-        )
+        #create_audit_log(
+        #    "Entra user deactivated",
+        #    f"Entra ID user with ID '{user_id}' was deactivated."
+        #)
+        
 
         return jsonify({
             "message": "Entra user deactivated successfully"
