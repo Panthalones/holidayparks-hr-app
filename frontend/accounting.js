@@ -301,6 +301,33 @@ async function deleteEmployee(id){
   }
 }
 
+async function deactivateEntraUser(userId){
+  if(!confirm("Weet je zeker dat je deze Entra ID gebruiker wilt deactiveren?")){
+    return;
+  }
+
+  try{
+    const response = await fetch(`${API_BASE}/api/entra-users/${userId}/deactivate`, {
+      method: "PATCH",
+      credentials: "include"
+    });
+
+    if(response.ok){
+      alert("Entra ID gebruiker is gedeactiveerd.");
+      loadEntraUsers();
+      loadAuditLogs();
+    }else{
+      const errorData = await response.json();
+      console.error("Graph error:", errorData);
+      alert("Entra ID gebruiker kon niet worden gedeactiveerd.");
+    }
+
+  }catch(error){
+    console.error("Fout bij deactiveren Entra gebruiker:", error);
+    alert("Geen verbinding met de Flask API.");
+  }
+}
+
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", function(){
@@ -374,7 +401,7 @@ function renderEntraUsers(usersToRender) {
         <td>${user.id || "-"}</td>
         <td>
           <button class="edit-btn">Bewerken</button>
-          <button class="delete-btn">Verwijderen</button>
+          <button class="delete-btn" onclick="deactivateEntraUser('${user.id}')">Deactiveren</button>
         </td>
       `;
 
