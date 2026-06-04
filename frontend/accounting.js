@@ -352,7 +352,7 @@ async function editEntraUser(userId, displayName, jobTitle, department, officeLo
         displayName: newDisplayName,
         jobTitle: newJobTitle,
         department: newDepartment,
-        officeLocation: newOfficeLocation
+        officeLocation: newOfficeLocation || "Onbekend"
       })
     });
 
