@@ -328,19 +328,47 @@ async function deactivateEntraUser(userId){
   }
 }
 
-function editEntraUser(userId, displayName, jobTitle, department, officeLocation){
+async function editEntraUser(userId, displayName, jobTitle, department, officeLocation){
   const newDisplayName = prompt("Naam:", displayName);
-  const newJobTitle = prompt("Functie:", jobTitle);
-  const newDepartment = prompt("Afdeling:", department);
-  const newOfficeLocation = prompt("Locatie:", officeLocation);
+  if (newDisplayName === null) return;
 
-  console.log("Edit Entra user:", {
-    userId,
-    newDisplayName,
-    newJobTitle,
-    newDepartment,
-    newOfficeLocation
-  });
+  const newJobTitle = prompt("Functie:", jobTitle);
+  if (newJobTitle === null) return;
+
+  const newDepartment = prompt("Afdeling:", department);
+  if (newDepartment === null) return;
+
+  const newOfficeLocation = prompt("Locatie:", officeLocation);
+  if (newOfficeLocation === null) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/entra-users/${userId}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        displayName: newDisplayName,
+        jobTitle: newJobTitle,
+        department: newDepartment,
+        officeLocation: newOfficeLocation
+      })
+    });
+
+    if (response.ok) {
+      alert("Entra ID gebruiker is bijgewerkt.");
+      loadEntraUsers();
+    } else {
+      const errorData = await response.json();
+      console.error("Graph update error:", errorData);
+      alert("Entra ID gebruiker kon niet worden bijgewerkt.");
+    }
+
+  } catch (error) {
+    console.error("Fout bij bewerken Entra gebruiker:", error);
+    alert("Geen verbinding met de Flask API.");
+  }
 }
 
 const logoutBtn = document.getElementById("logoutBtn");
