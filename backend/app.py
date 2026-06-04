@@ -189,6 +189,55 @@ def test_graph():
         return jsonify({
             "error": str(e)
         }), 500
+    
+def get_graph_access_token():
+    token_result = build_msal_app().acquire_token_for_client(
+        scopes=["https://graph.microsoft.com/.default"]
+    )
+
+    if "access_token" not in token_result:
+        return None, token_result
+
+    return token_result["access_token"], None  
+
+@app.route("/api/entra-users/<user_id>/deactivate", methods=["PATCH"])
+def deactivate_entra_user(user_id):
+    try:
+        access_token, error = get_graph_access_token()
+
+        if error:
+            return jsonify({
+                "error": "Geen access token",
+                "details": error
+            }), 500
+
+        graph_response = requests.patch(
+            f"https://graph.microsoft.com/v1.0/users/{user_id}",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "accountEnabled": False
+            }
+        )
+
+        if graph_response.status_code not in [200, 204]:
+            return jsonify(graph_response.json()), graph_response.status_code
+
+        create_audit_log(
+            "Entra user deactivated",
+            f"Entra ID user with ID '{user_id}' was deactivated."
+        )
+
+        return jsonify({
+            "message": "Entra user deactivated successfully"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500  
 
 def get_performed_by():
     if session.get("user"):
