@@ -254,7 +254,7 @@ def update_entra_user(user_id):
 
         update_data = {
             key: value for key, value in update_data.items()
-            if value is not None
+            if value is not None and str(value).strip() != ""
         }
 
         access_token, error = get_graph_access_token()
