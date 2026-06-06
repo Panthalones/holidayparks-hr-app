@@ -198,7 +198,64 @@ def get_graph_access_token():
     if "access_token" not in token_result:
         return None, token_result
 
-    return token_result["access_token"], None  
+    return token_result["access_token"], None 
+
+@app.route("/api/entra-users", methods=["POST"])
+def create_entra_user():
+    try:
+        data = request.get_json()
+
+        required_fields = ["name", "email", "function", "department", "location"]
+
+        for field in required_fields:
+            if field not in data or str(data[field]).strip() == "":
+                return jsonify({
+                    "error": f"Missing field: {field}"
+                }), 400
+
+        access_token, error = get_graph_access_token()
+
+        if error:
+            return jsonify({
+                "error": "Geen access token",
+                "details": error
+            }), 500
+
+        graph_user = {
+            "accountEnabled": True,
+            "displayName": data["name"].strip(),
+            "mailNickname": data["email"].split("@")[0],
+            "userPrincipalName": data["email"].strip(),
+            "passwordProfile": {
+                "forceChangePasswordNextSignIn": True,
+                "password": "HolidayParks2026!"
+            },
+            "jobTitle": data["function"].strip(),
+            "department": data["department"].strip(),
+            "officeLocation": data["location"].strip()
+        }
+
+        graph_response = requests.post(
+            "https://graph.microsoft.com/v1.0/users",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            },
+            json=graph_user
+        )
+
+        if graph_response.status_code not in [200, 201]:
+            return jsonify(graph_response.json()), graph_response.status_code
+
+        return jsonify({
+            "message": "Entra user created successfully",
+            "temporaryPassword": "HolidayParks2026!"
+        }), 201
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500 
 
 @app.route("/api/entra-users/<user_id>/deactivate", methods=["PATCH"])
 def deactivate_entra_user(user_id):
@@ -243,21 +300,21 @@ def deactivate_entra_user(user_id):
 @app.route("/api/entra-users/<user_id>", methods=["PATCH"])
 def update_entra_user(user_id):
     try:
+        data = request.get_json()
+        print("DEBUG DATA:", data)
+
         update_data = {}
 
-        data = request.get_json()
+        if data.get("displayName") and data.get("displayName").strip():
+            update_data["displayName"] = data.get("displayName").strip()
 
-            if data.get("displayName") and data.get("displayName").strip():
-                update_data["displayName"] = data.get("displayName").strip()
+        if data.get("jobTitle") and data.get("jobTitle").strip():
+            update_data["jobTitle"] = data.get("jobTitle").strip()
 
-            if data.get("jobTitle") and data.get("jobTitle").strip():
-                update_data["jobTitle"] = data.get("jobTitle").strip()
+        if data.get("department") and data.get("department").strip():                update_data["department"] = data.get("department").strip()
 
-            if data.get("department") and data.get("department").strip():
-                update_data["department"] = data.get("department").strip()
-
-            if data.get("officeLocation") and data.get("officeLocation").strip():
-                update_data["officeLocation"] = data.get("officeLocation").strip()
+        if data.get("officeLocation") and data.get("officeLocation").strip():
+            update_data["officeLocation"] = data.get("officeLocation").strip()
 
         access_token, error = get_graph_access_token()
 

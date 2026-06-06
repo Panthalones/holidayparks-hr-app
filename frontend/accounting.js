@@ -211,6 +211,7 @@ if (employeeForm) {
 
     const employeeData = {
       name: document.getElementById("employeeName").value,
+      email: document.getElementById("employeeEmail").value,
       function: document.getElementById("employeeFunction").value,
       department: document.getElementById("employeeDepartment").value,
       location: document.getElementById("employeeLocation").value
@@ -222,7 +223,7 @@ if (employeeForm) {
 
     try{
       const response = await fetch(
-        editingEmployeeId ? `${API_URL}/${editingEmployeeId}` : API_URL,
+        editingEmployeeId ? `${API_URL}/${editingEmployeeId}` : ENTRA_USERS_URL,
         {
           method: editingEmployeeId ? "PUT" : "POST",
           credentials: "include",
