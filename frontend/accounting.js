@@ -234,31 +234,29 @@ if (employeeForm) {
         }
       );
 
-      if(response.ok){
+if(response.ok){
+  const result = await response.json();
 
-        const result = await response.json();
+  alert(
+    `Gebruiker succesvol aangemaakt.\n\n` +
+    `Tijdelijk wachtwoord:\n${result.temporaryPassword}`
+  );
 
-        alert(
-          `Gebruiker succesvol aangemaakt.\n\n` +
-          `Tijdelijk wachtwoord:\n${result.temporaryPassword}`
-        );
+  employeeForm.reset();
+  editingEmployeeId = null;
 
-        employeeForm.reset();
-        editingEmployeeId = null;
+  loadEntraUsers();
 
-        loadEntraUsers();
+}else{
+  const errorData = await response.json();
+  console.error("API error:", errorData);
+  alert("Medewerker kon niet worden opgeslagen.");
 }
 
-      }else{
-        const errorData = await response.json();
-        console.error("API error:", errorData);
-        alert("Medewerker kon niet worden opgeslagen.");
-      }
-
-    }catch(error){
-      console.error("Fout bij opslaan medewerker:", error);
-      alert("Geen verbinding met de Flask API.");
-    }
+}catch(error){
+  console.error("Fout bij opslaan medewerker:", error);
+  alert("Geen verbinding met de Flask API.");
+}
   });
 }
 
