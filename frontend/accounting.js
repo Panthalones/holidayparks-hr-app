@@ -1,6 +1,6 @@
 const API_BASE = "https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io"
 
-const API_URL = `${API_BASE}/api/employees`;
+const API_URL = `${API_BASE}/api/entra-users`;
 const AUDIT_API_URL = `${API_BASE}/api/audit-logs`;
 const ENTRA_USERS_URL = `${API_BASE}/api/entra-users`;
 
