@@ -2,48 +2,40 @@ from flask import Flask, request, jsonify, session, redirect
 from flask_cors import CORS
 from flask_session import Session
 
-import mysql.connector
 import msal
 import os
 import requests
 
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 app = Flask(__name__)
 
-
-app.config["SECRET_KEY"] = os.getenv(
-    "SECRET_KEY",
-    "HolidayParks-HR-Secret"
-)
-
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "HolidayParks-HR-Secret")
 app.config["SESSION_TYPE"] = "filesystem"
-
-# Ensure session cookies work for cross-site requests (required for frontend -> backend credentials)
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = True
 
 Session(app)
-
 
 # Entra ID configuration
 TENANT_ID = os.getenv("TENANT_ID")
 CLIENT_ID = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
-FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL",     "https://holidayparks-frontend.whitedune-b42d430c.swedencentral.azurecontainerapps.io")
-BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL",     "https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io")
+FRONTEND_BASE_URL = os.getenv(
+    "FRONTEND_BASE_URL",
+    "https://holidayparks-frontend.whitedune-b42d430c.swedencentral.azurecontainerapps.io"
+)
+BACKEND_BASE_URL = os.getenv(
+    "BACKEND_BASE_URL",
+    "https://holidayparks-backend.whitedune-b42d430c.swedencentral.azurecontainerapps.io"
+)
 
 AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+SCOPES = ["User.Read"]
 
-SCOPES = [
-    "User.Read"
-]
-
-# Configure CORS to allow the frontend origin and credentials (cookies)
 CORS(
     app,
     supports_credentials=True,
@@ -51,20 +43,7 @@ CORS(
 )
 
 
-# MySQL configuration
-db_config = {
-    "host": os.getenv("DB_HOST", "172.16.10.7"),
-    "user": os.getenv("DB_USER", "hrapp"),
-    "password": os.getenv("DB_PASSWORD", "Admin123!"),
-    "database": os.getenv("DB_NAME", "fonteyn_hr")
-}
-
-
-def get_db_connection():
-    return mysql.connector.connect(**db_config)
-
 def build_msal_app():
-
     return msal.ConfidentialClientApplication(
         CLIENT_ID,
         authority=AUTHORITY,
@@ -72,9 +51,19 @@ def build_msal_app():
     )
 
 
+def get_graph_access_token():
+    token_result = build_msal_app().acquire_token_for_client(
+        scopes=["https://graph.microsoft.com/.default"]
+    )
+
+    if "access_token" not in token_result:
+        return None, token_result
+
+    return token_result["access_token"], None
+
+
 @app.route("/login")
 def login():
-
     auth_url = build_msal_app().get_authorization_request_url(
         SCOPES,
         redirect_uri=f"{BACKEND_BASE_URL}/getAToken",
@@ -86,7 +75,6 @@ def login():
 
 @app.route("/getAToken")
 def authorized():
-
     code = request.args.get("code")
 
     result = build_msal_app().acquire_token_by_authorization_code(
@@ -96,16 +84,12 @@ def authorized():
     )
 
     if "id_token_claims" in result:
-
         session["user"] = {
             "name": result["id_token_claims"].get("name"),
-            "email": result["id_token_claims"].get(
-                "preferred_username"
-            )
+            "email": result["id_token_claims"].get("preferred_username")
         }
 
-    return redirect(f"{FRONTEND_BASE_URL}")
-        
+        return redirect(FRONTEND_BASE_URL)
 
     return jsonify({
         "error": "Login failed",
@@ -115,12 +99,8 @@ def authorized():
 
 @app.route("/api/user")
 def current_user():
-
     if not session.get("user"):
-
-        return jsonify({
-            "authenticated": False
-        })
+        return jsonify({"authenticated": False})
 
     return jsonify({
         "authenticated": True,
@@ -130,13 +110,13 @@ def current_user():
 
 @app.route("/logout")
 def logout():
-
     session.clear()
 
     return redirect(
         f"{AUTHORITY}/oauth2/v2.0/logout"
-        "?post_logout_redirect_uri={BACKEND_BASE_URL}/login"
+        f"?post_logout_redirect_uri={BACKEND_BASE_URL}/login"
     )
+
 
 @app.route("/api/health", methods=["GET"])
 def health_check():
@@ -144,74 +124,59 @@ def health_check():
         "status": "online",
         "service": "Fonteyn HR API",
         "auth": "Entra ID ready",
-        "database": "MySQL"
+        "database": "disabled"
     }), 200
 
+
 @app.route("/api/entra-users", methods=["GET"])
-def test_graph():
-
+def get_entra_users():
     try:
-        token_result = build_msal_app().acquire_token_for_client(
-            scopes=["https://graph.microsoft.com/.default"]
-        )
+        access_token, error = get_graph_access_token()
 
-        if "access_token" not in token_result:
+        if error:
             return jsonify({
                 "error": "Geen access token",
-                "details": token_result
+                "details": error
             }), 500
 
         users = []
 
         graph_url = (
             "https://graph.microsoft.com/v1.0/users"
-            "?$select=id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation"
+            "?$select=id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation,accountEnabled,onPremisesSyncEnabled"
             "&$top=999"
         )
 
         while graph_url:
             graph_response = requests.get(
                 graph_url,
-                headers={
-                    "Authorization": f"Bearer {token_result['access_token']}"
-                }
+                headers={"Authorization": f"Bearer {access_token}"}
             )
 
             data = graph_response.json()
 
-            users.extend(data.get("value", []))
+            if graph_response.status_code != 200:
+                return jsonify(data), graph_response.status_code
 
+            users.extend(data.get("value", []))
             graph_url = data.get("@odata.nextLink")
 
-        return jsonify(users)
+        return jsonify(users), 200
 
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
-    
-def get_graph_access_token():
-    token_result = build_msal_app().acquire_token_for_client(
-        scopes=["https://graph.microsoft.com/.default"]
-    )
+        return jsonify({"error": str(e)}), 500
 
-    if "access_token" not in token_result:
-        return None, token_result
-
-    return token_result["access_token"], None 
 
 @app.route("/api/entra-users", methods=["POST"])
 def create_entra_user():
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
 
         required_fields = ["name", "email", "function", "department", "location"]
 
         for field in required_fields:
             if field not in data or str(data[field]).strip() == "":
-                return jsonify({
-                    "error": f"Missing field: {field}"
-                }), 400
+                return jsonify({"error": f"Missing field: {field}"}), 400
 
         access_token, error = get_graph_access_token()
 
@@ -221,14 +186,16 @@ def create_entra_user():
                 "details": error
             }), 500
 
+        temporary_password = "HolidayParks2026!"
+
         graph_user = {
             "accountEnabled": True,
             "displayName": data["name"].strip(),
-            "mailNickname": data["email"].split("@")[0],
+            "mailNickname": data["email"].split("@")[0].strip(),
             "userPrincipalName": data["email"].strip(),
             "passwordProfile": {
                 "forceChangePasswordNextSignIn": True,
-                "password": "HolidayParks2026!"
+                "password": temporary_password
             },
             "jobTitle": data["function"].strip(),
             "department": data["department"].strip(),
@@ -244,18 +211,20 @@ def create_entra_user():
             json=graph_user
         )
 
+        response_data = graph_response.json()
+
         if graph_response.status_code not in [200, 201]:
-            return jsonify(graph_response.json()), graph_response.status_code
+            return jsonify(response_data), graph_response.status_code
 
         return jsonify({
             "message": "Entra user created successfully",
-            "temporaryPassword": "HolidayParks2026!"
+            "temporaryPassword": temporary_password,
+            "user": response_data
         }), 201
 
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500 
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/entra-users/<user_id>/deactivate", methods=["PATCH"])
 def deactivate_entra_user(user_id):
@@ -274,34 +243,24 @@ def deactivate_entra_user(user_id):
                 "Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json"
             },
-            json={
-                "accountEnabled": False
-            }
+            json={"accountEnabled": False}
         )
 
         if graph_response.status_code not in [200, 204]:
             return jsonify(graph_response.json()), graph_response.status_code
-
-        #create_audit_log(
-        #    "Entra user deactivated",
-        #    f"Entra ID user with ID '{user_id}' was deactivated."
-        #)
-        
 
         return jsonify({
             "message": "Entra user deactivated successfully"
         }), 200
 
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500  
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/entra-users/<user_id>", methods=["PATCH"])
 def update_entra_user(user_id):
     try:
-        data = request.get_json()
-        print("DEBUG DATA:", data)
+        data = request.get_json() or {}
 
         update_data = {}
 
@@ -311,10 +270,14 @@ def update_entra_user(user_id):
         if data.get("jobTitle") and data.get("jobTitle").strip():
             update_data["jobTitle"] = data.get("jobTitle").strip()
 
-        if data.get("department") and data.get("department").strip():                update_data["department"] = data.get("department").strip()
+        if data.get("department") and data.get("department").strip():
+            update_data["department"] = data.get("department").strip()
 
         if data.get("officeLocation") and data.get("officeLocation").strip():
             update_data["officeLocation"] = data.get("officeLocation").strip()
+
+        if not update_data:
+            return jsonify({"error": "No valid fields to update"}), 400
 
         access_token, error = get_graph_access_token()
 
@@ -341,286 +304,14 @@ def update_entra_user(user_id):
         }), 200
 
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
-
-def get_performed_by():
-    if session.get("user"):
-        return session["user"].get("email", "Unknown user")
-
-    return "HR Admin"
+        return jsonify({"error": str(e)}), 500
 
 
-def create_audit_log(action, description):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO audit_logs
-        (action, description, performed_by)
-        VALUES (%s, %s, %s)
-    """, (
-        action,
-        description,
-        get_performed_by()
-    ))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-@app.route("/api/employees", methods=["GET"])
-def get_employees():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT id, name, function_name, department, location, status, created_at
-            FROM employees
-            ORDER BY id DESC
-        """)
-
-        employees = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        return jsonify(employees), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": "Database error",
-            "details": str(e)
-        }), 500
-    
-@app.route("/api/employees", methods=["POST"])
-def add_employee():
-    try:
-        data = request.get_json()
-
-        required_fields = ["name", "function", "department", "location"]
-
-        for field in required_fields:
-            if field not in data or data[field] == "":
-                return jsonify({
-                    "error": f"Missing field: {field}"
-                }), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            INSERT INTO employees
-            (name, function_name, department, location, status)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (
-            data["name"],
-            data["function"],
-            data["department"],
-            data["location"],
-            "Actief"
-        ))
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        create_audit_log(
-            "Employee added",
-            f"New employee '{data['name']}' was added to department '{data['department']}'."
-        )
-
-        return jsonify({
-            "message": "Employee added successfully"
-        }), 201
-
-    except Exception as e:
-        return jsonify({
-            "error": "Database error",
-            "details": str(e)
-        }), 500
-    
-@app.route("/api/employees/<int:id>", methods=["PUT"])
-def update_employee(id):
-    try:
-        data = request.get_json()
-
-        required_fields = ["name", "function", "department", "location", "status"]
-
-        for field in required_fields:
-            if field not in data or data[field] == "":
-                return jsonify({
-                    "error": f"Missing field: {field}"
-                }), 400
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute("""
-            UPDATE employees
-            SET name = %s,
-                function_name = %s,
-                department = %s,
-                location = %s,
-                status = %s
-            WHERE id = %s
-        """, (
-            data["name"],
-            data["function"],
-            data["department"],
-            data["location"],
-            data["status"],
-            id
-        ))
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        create_audit_log(
-            "Employee updated",
-            f"Employee '{data['name']}' was updated."
-        )
-
-        return jsonify({
-            "message": "Employee updated successfully"
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": "Database error",
-            "details": str(e)
-        }), 500
-    
-@app.route("/api/employees/<int:id>/deactivate", methods=["PUT"])
-def deactivate_employee(id):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute(
-            "SELECT name FROM employees WHERE id = %s",
-            (id,)
-        )
-
-        employee = cursor.fetchone()
-
-        if not employee:
-            cursor.close()
-            conn.close()
-            return jsonify({
-                "error": "Employee not found"
-            }), 404
-
-        cursor.execute("""
-            UPDATE employees
-            SET status = %s
-            WHERE id = %s
-        """, (
-            "Inactief",
-            id
-        ))
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        create_audit_log(
-            "Employee deactivated",
-            f"Employee '{employee['name']}' was deactivated."
-        )
-
-        return jsonify({
-            "message": "Employee deactivated successfully"
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": "Database error",
-            "details": str(e)
-        }), 500
-    
-@app.route("/api/employees/<int:id>", methods=["DELETE"])
-def delete_employee(id):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute(
-            "SELECT name FROM employees WHERE id = %s",
-            (id,)
-        )
-
-        employee = cursor.fetchone()
-
-        if not employee:
-            cursor.close()
-            conn.close()
-
-            return jsonify({
-                "error": "Employee not found"
-            }), 404
-
-        cursor.execute(
-            "DELETE FROM employees WHERE id = %s",
-            (id,)
-        )
-
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-
-        create_audit_log(
-            "Employee deleted",
-            f"Employee '{employee['name']}' was permanently deleted."
-        )
-
-        return jsonify({
-            "message": "Employee deleted successfully"
-        }), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": "Database error",
-            "details": str(e)
-        }), 500
-
-    except Exception as e:
-        return jsonify({
-            "error": "Database error",
-            "details": str(e)
-        }), 500
-    
+# Audit logs are disabled for now because the app no longer uses MySQL.
 @app.route("/api/audit-logs", methods=["GET"])
 def get_audit_logs():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+    return jsonify([]), 200
 
-        cursor.execute("""
-            SELECT id, action, description, performed_by, created_at
-            FROM audit_logs
-            ORDER BY id DESC
-        """)
-
-        logs = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
-        return jsonify(logs), 200
-
-    except Exception as e:
-        return jsonify({
-            "error": "Database error",
-            "details": str(e)
-        }), 500
 
 if __name__ == "__main__":
     app.run(
