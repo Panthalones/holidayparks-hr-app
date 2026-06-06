@@ -235,11 +235,19 @@ if (employeeForm) {
       );
 
       if(response.ok){
+
+        const result = await response.json();
+
+        alert(
+          `Gebruiker succesvol aangemaakt.\n\n` +
+          `Tijdelijk wachtwoord:\n${result.temporaryPassword}`
+        );
+
         employeeForm.reset();
         editingEmployeeId = null;
 
-        loadEmployees();
-        loadAuditLogs();
+        loadEntraUsers();
+}
 
       }else{
         const errorData = await response.json();
