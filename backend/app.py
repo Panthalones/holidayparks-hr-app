@@ -243,19 +243,21 @@ def deactivate_entra_user(user_id):
 @app.route("/api/entra-users/<user_id>", methods=["PATCH"])
 def update_entra_user(user_id):
     try:
+        update_data = {}
+
         data = request.get_json()
 
-        update_data = {
-            "displayName": data.get("displayName"),
-            "jobTitle": data.get("jobTitle"),
-            "department": data.get("department"),
-            "officeLocation": data.get("officeLocation")
-        }
+            if data.get("displayName") and data.get("displayName").strip():
+                update_data["displayName"] = data.get("displayName").strip()
 
-        update_data = {
-            key: value for key, value in update_data.items()
-            if value is not None and str(value).strip() != ""
-        }
+            if data.get("jobTitle") and data.get("jobTitle").strip():
+                update_data["jobTitle"] = data.get("jobTitle").strip()
+
+            if data.get("department") and data.get("department").strip():
+                update_data["department"] = data.get("department").strip()
+
+            if data.get("officeLocation") and data.get("officeLocation").strip():
+                update_data["officeLocation"] = data.get("officeLocation").strip()
 
         access_token, error = get_graph_access_token()
 
