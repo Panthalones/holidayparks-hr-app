@@ -256,6 +256,35 @@ def deactivate_entra_user(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/entra-users/<user_id>", methods=["DELETE"])
+def delete_entra_user(user_id):
+    try:
+        access_token, error = get_graph_access_token()
+
+        if error:
+            return jsonify({
+                "error": "Geen access token",
+                "details": error
+            }), 500
+
+        graph_response = requests.delete(
+            f"https://graph.microsoft.com/v1.0/users/{user_id}",
+            headers={
+                "Authorization": f"Bearer {access_token}"
+            }
+        )
+
+        if graph_response.status_code not in [200, 204]:
+            return jsonify(graph_response.json()), graph_response.status_code
+
+        return jsonify({
+            "message": "Entra user deleted successfully"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": str(e)
+        }), 500
 
 @app.route("/api/entra-users/<user_id>", methods=["PATCH"])
 def update_entra_user(user_id):

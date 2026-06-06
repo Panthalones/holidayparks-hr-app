@@ -162,6 +162,32 @@ async function deactivateEntraUser(userId) {
   }
 }
 
+async function deleteEntraUser(userId){
+  if(!confirm("Weet je zeker dat je deze Entra ID gebruiker permanent wilt verwijderen?")){
+    return;
+  }
+
+  try{
+    const response = await fetch(`${ENTRA_USERS_URL}/${userId}`, {
+      method: "DELETE",
+      credentials: "include"
+    });
+
+    if(response.ok){
+      alert("Entra ID gebruiker is verwijderd.");
+      loadEntraUsers();
+    }else{
+      const errorData = await response.json();
+      console.error("Delete error:", errorData);
+      alert("Entra ID gebruiker kon niet worden verwijderd.");
+    }
+
+  }catch(error){
+    console.error("Fout bij verwijderen Entra gebruiker:", error);
+    alert("Geen verbinding met de Flask API.");
+  }
+}
+
 async function editEntraUser(userId, displayName, jobTitle, department, officeLocation) {
   const newDisplayName = prompt("Naam:", displayName);
   if (newDisplayName === null) return;
@@ -289,6 +315,11 @@ async function loadEntraUsers() {
               class="delete-btn"
               onclick="deactivateEntraUser('${user.id}')">
               Deactiveren
+            </button>
+            <button
+              class="delete-btn"
+              onclick="deleteEntraUser('${user.id}')">
+              Verwijderen
             </button>
           </td>
         `;
