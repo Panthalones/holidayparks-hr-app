@@ -298,3 +298,11 @@ td{
     font-size:14px;
   }
 }
+.audit-action{
+  background:#eef6f1;
+  color:#1f4d3a;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:bold;
+}

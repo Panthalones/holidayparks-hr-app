@@ -6,6 +6,15 @@ import msal
 import os
 import requests
 
+import json
+import threading
+from datetime import datetime, timezone
+
+try:
+    import mysql.connector
+except ImportError:
+    mysql = None
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -60,6 +69,158 @@ def get_graph_access_token():
         return None, token_result
 
     return token_result["access_token"], None
+
+
+def get_current_admin():
+    user = session.get("user") or {}
+    return user.get("email") or user.get("name") or "Onbekende admin"
+
+
+class JsonAuditLogStore:
+    """Audit log storage voor de schooldemo.
+
+    Later kun je deze class vervangen door MySQLAuditLogStore zonder dat je frontend
+    of routes hoeft aan te passen.
+    """
+
+    def __init__(self, file_path):
+        self.file_path = file_path
+        self.lock = threading.Lock()
+        directory = os.path.dirname(self.file_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        if not os.path.exists(self.file_path):
+            self._write_logs([])
+
+    def _read_logs(self):
+        try:
+            with open(self.file_path, "r", encoding="utf-8") as file:
+                return json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+
+    def _write_logs(self, logs):
+        with open(self.file_path, "w", encoding="utf-8") as file:
+            json.dump(logs, file, indent=2, ensure_ascii=False)
+
+    def list_logs(self, limit=100):
+        with self.lock:
+            logs = self._read_logs()
+        return list(reversed(logs))[:limit]
+
+    def add_log(self, action, description, performed_by, target_user_id=None):
+        log_item = {
+            "id": datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f"),
+            "action": action,
+            "description": description,
+            "performed_by": performed_by,
+            "target_user_id": target_user_id,
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds")
+        }
+
+        with self.lock:
+            logs = self._read_logs()
+            logs.append(log_item)
+            self._write_logs(logs)
+
+        return log_item
+
+
+class MySQLAuditLogStore:
+    """Optionele MySQL-opslag. Zet AUDIT_STORAGE=mysql in .env om deze te gebruiken."""
+
+    def __init__(self):
+        if mysql is None:
+            raise RuntimeError("mysql-connector-python is niet geïnstalleerd")
+        self._create_table_if_needed()
+
+    def _connection(self):
+        return mysql.connector.connect(
+            host=os.getenv("DB_HOST"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            database=os.getenv("DB_NAME")
+        )
+
+    def _create_table_if_needed(self):
+        with self._connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audit_logs (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    action VARCHAR(100) NOT NULL,
+                    description TEXT NOT NULL,
+                    performed_by VARCHAR(255) NOT NULL,
+                    target_user_id VARCHAR(255),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+            connection.commit()
+
+    def list_logs(self, limit=100):
+        with self._connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                """
+                SELECT id, action, description, performed_by, target_user_id, created_at
+                FROM audit_logs
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (limit,)
+            )
+            logs = cursor.fetchall()
+
+        for log in logs:
+            if log.get("created_at"):
+                log["created_at"] = log["created_at"].isoformat(sep=" ")
+        return logs
+
+    def add_log(self, action, description, performed_by, target_user_id=None):
+        with self._connection() as connection:
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                """
+                INSERT INTO audit_logs (action, description, performed_by, target_user_id)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (action, description, performed_by, target_user_id)
+            )
+            connection.commit()
+            log_id = cursor.lastrowid
+
+        return {
+            "id": log_id,
+            "action": action,
+            "description": description,
+            "performed_by": performed_by,
+            "target_user_id": target_user_id,
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds")
+        }
+
+
+def build_audit_store():
+    storage_type = os.getenv("AUDIT_STORAGE", "json").lower()
+
+    if storage_type == "mysql":
+        return MySQLAuditLogStore()
+
+    audit_log_file = os.getenv("AUDIT_LOG_FILE", "/tmp/fonteyn_audit_logs.json")
+    return JsonAuditLogStore(audit_log_file)
+
+
+audit_store = build_audit_store()
+
+
+def write_audit_log(action, description, target_user_id=None):
+    return audit_store.add_log(
+        action=action,
+        description=description,
+        performed_by=get_current_admin(),
+        target_user_id=target_user_id
+    )
 
 
 @app.route("/login")
@@ -124,7 +285,8 @@ def health_check():
         "status": "online",
         "service": "Fonteyn HR API",
         "auth": "Entra ID ready",
-        "database": "disabled"
+        "audit_storage": os.getenv("AUDIT_STORAGE", "json"),
+        "audit_logs": "enabled"
     }), 200
 
 
@@ -216,6 +378,13 @@ def create_entra_user():
         if graph_response.status_code not in [200, 201]:
             return jsonify(response_data), graph_response.status_code
 
+        created_user_id = response_data.get("id")
+        write_audit_log(
+            action="CREATE_USER",
+            description=f"Nieuwe Entra ID gebruiker aangemaakt: {graph_user['displayName']} ({graph_user['userPrincipalName']})",
+            target_user_id=created_user_id
+        )
+
         return jsonify({
             "message": "Entra user created successfully",
             "temporaryPassword": temporary_password,
@@ -249,6 +418,12 @@ def deactivate_entra_user(user_id):
         if graph_response.status_code not in [200, 204]:
             return jsonify(graph_response.json()), graph_response.status_code
 
+        write_audit_log(
+            action="DEACTIVATE_USER",
+            description=f"Entra ID gebruiker gedeactiveerd: {user_id}",
+            target_user_id=user_id
+        )
+
         return jsonify({
             "message": "Entra user deactivated successfully"
         }), 200
@@ -276,6 +451,12 @@ def delete_entra_user(user_id):
 
         if graph_response.status_code not in [200, 204]:
             return jsonify(graph_response.json()), graph_response.status_code
+
+        write_audit_log(
+            action="DELETE_USER",
+            description=f"Entra ID gebruiker permanent verwijderd: {user_id}",
+            target_user_id=user_id
+        )
 
         return jsonify({
             "message": "Entra user deleted successfully"
@@ -328,6 +509,13 @@ def update_entra_user(user_id):
         if graph_response.status_code not in [200, 204]:
             return jsonify(graph_response.json()), graph_response.status_code
 
+        changed_fields = ", ".join(update_data.keys())
+        write_audit_log(
+            action="UPDATE_USER",
+            description=f"Entra ID gebruiker bijgewerkt: {user_id}. Velden: {changed_fields}",
+            target_user_id=user_id
+        )
+
         return jsonify({
             "message": "Entra user updated successfully"
         }), 200
@@ -336,10 +524,14 @@ def update_entra_user(user_id):
         return jsonify({"error": str(e)}), 500
 
 
-# Audit logs are disabled for now because the app no longer uses MySQL.
 @app.route("/api/audit-logs", methods=["GET"])
 def get_audit_logs():
-    return jsonify([]), 200
+    try:
+        limit = request.args.get("limit", default=100, type=int)
+        limit = max(1, min(limit, 500))
+        return jsonify(audit_store.list_logs(limit=limit)), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

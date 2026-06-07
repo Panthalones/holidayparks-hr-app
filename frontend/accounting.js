@@ -10,6 +10,28 @@ const activeEmployees = document.getElementById("activeEmployees");
 
 let entraUsers = [];
 
+function escapeHtml(value) {
+  return String(value ?? "-")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatAuditTime(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return escapeHtml(value);
+
+  return date.toLocaleString("nl-NL", {
+    dateStyle: "short",
+    timeStyle: "medium"
+  });
+}
+
+
 function getEmployeeForm() {
   return document.getElementById("employeeForm");
 }
@@ -39,8 +61,15 @@ function showDashboard() {
 
 async function loadAuditLogs() {
   try {
-    const response = await fetch(AUDIT_API_URL, { credentials: "include" });
+    const response = await fetch(`${AUDIT_API_URL}?limit=50`, { credentials: "include" });
     const logs = await response.json();
+
+    if (!response.ok) {
+      console.error("Audit logs error:", logs);
+      renderAuditLogs([]);
+      return;
+    }
+
     renderAuditLogs(logs);
   } catch (error) {
     console.error("Fout bij ophalen audit logs:", error);
@@ -117,6 +146,7 @@ if (employeeForm) {
 
         employeeForm.reset();
         await loadEntraUsers();
+        await loadAuditLogs();
       } else {
         const errorData = await response.json();
         console.error("API error:", errorData);
@@ -175,7 +205,8 @@ async function deleteEntraUser(userId){
 
     if(response.ok){
       alert("Entra ID gebruiker is verwijderd.");
-      loadEntraUsers();
+      await loadEntraUsers();
+      await loadAuditLogs();
     }else{
       const errorData = await response.json();
       console.error("Delete error:", errorData);
@@ -219,6 +250,7 @@ async function editEntraUser(userId, displayName, jobTitle, department, officeLo
     if (response.ok) {
       alert("Entra ID gebruiker is bijgewerkt.");
       await loadEntraUsers();
+      await loadAuditLogs();
     } else {
       const errorData = await response.json();
       console.error("Graph update error:", errorData);
@@ -293,36 +325,36 @@ async function loadEntraUsers() {
         const row = document.createElement("tr");
 
         row.innerHTML = `
-          <td>${user.displayName || "-"}</td>
-          <td>${user.mail || user.userPrincipalName || "-"}</td>
-          <td>${user.jobTitle || "-"}</td>
-          <td>${user.department || "-"}</td>
-          <td>${user.officeLocation || "-"}</td>
-          <td>${user.id || "-"}</td>
+          <td>${escapeHtml(user.displayName)}</td>
+          <td>${escapeHtml(user.mail || user.userPrincipalName)}</td>
+          <td>${escapeHtml(user.jobTitle)}</td>
+          <td>${escapeHtml(user.department)}</td>
+          <td>${escapeHtml(user.officeLocation)}</td>
+          <td>${escapeHtml(user.id)}</td>
           <td>
-            <button
-              class="edit-btn"
-              onclick="editEntraUser(
-                '${user.id}',
-                '${user.displayName || ""}',
-                '${user.jobTitle || ""}',
-                '${user.department || ""}',
-                '${user.officeLocation || ""}'
-              )">
-              Bewerken
-            </button>
-            <button
-              class="delete-btn"
-              onclick="deactivateEntraUser('${user.id}')">
-              Deactiveren
-            </button>
-            <button
-              class="delete-btn"
-              onclick="deleteEntraUser('${user.id}')">
-              Verwijderen
-            </button>
+            <button class="edit-btn" type="button">Bewerken</button>
+            <button class="deactivate-btn" type="button">Deactiveren</button>
+            <button class="delete-btn" type="button">Verwijderen</button>
           </td>
         `;
+
+        row.querySelector(".edit-btn").addEventListener("click", () => {
+          editEntraUser(
+            user.id,
+            user.displayName || "",
+            user.jobTitle || "",
+            user.department || "",
+            user.officeLocation || ""
+          );
+        });
+
+        row.querySelector(".deactivate-btn").addEventListener("click", () => {
+          deactivateEntraUser(user.id);
+        });
+
+        row.querySelector(".delete-btn").addEventListener("click", () => {
+          deleteEntraUser(user.id);
+        });
 
         table.appendChild(row);
       });
