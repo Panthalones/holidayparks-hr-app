@@ -72,8 +72,19 @@ def get_graph_access_token():
 
 
 def get_current_admin():
-    user = session.get("user") or {}
-    return user.get("email") or user.get("name") or "Onbekende admin"
+    print("SESSION USER =", session.get("user"))
+    user = session.get("user")
+
+    if not user:
+        return "Onbekende admin"
+
+    email = user.get("email")
+    name = user.get("name")
+
+    if email and name:
+        return f"{name} ({email})"
+
+    return email or name or "Onbekende admin"
 
 
 class JsonAuditLogStore:
@@ -332,6 +343,13 @@ def get_entra_users():
 @app.route("/api/entra-users", methods=["POST"])
 def create_entra_user():
     try:
+
+        if not session.get("user"):
+            return jsonify({"error": "Niet ingelogd"}), 401
+
+        if not session.get("user"):
+            return jsonify({"error": "Niet ingelogd"}), 401
+
         data = request.get_json() or {}
 
         required_fields = ["name", "email", "function", "department", "location"]
@@ -398,6 +416,10 @@ def create_entra_user():
 @app.route("/api/entra-users/<user_id>/deactivate", methods=["PATCH"])
 def deactivate_entra_user(user_id):
     try:
+
+        if not session.get("user"):
+            return jsonify({"error": "Niet ingelogd"}), 401
+
         access_token, error = get_graph_access_token()
 
         if error:
@@ -434,6 +456,10 @@ def deactivate_entra_user(user_id):
 @app.route("/api/entra-users/<user_id>", methods=["DELETE"])
 def delete_entra_user(user_id):
     try:
+
+        if not session.get("user"):
+            return jsonify({"error": "Niet ingelogd"}), 401
+
         access_token, error = get_graph_access_token()
 
         if error:
@@ -470,6 +496,10 @@ def delete_entra_user(user_id):
 @app.route("/api/entra-users/<user_id>", methods=["PATCH"])
 def update_entra_user(user_id):
     try:
+
+        if not session.get("user"):
+            return jsonify({"error": "Niet ingelogd"}), 401
+
         data = request.get_json() or {}
 
         update_data = {}
