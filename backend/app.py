@@ -11,9 +11,9 @@ import threading
 from datetime import datetime, timezone
 
 try:
-    import mysql.connector
+    import pyodbc
 except ImportError:
-    mysql = None
+    pyodbc = None
 
 from dotenv import load_dotenv
 
@@ -137,34 +137,59 @@ class JsonAuditLogStore:
         return log_item
 
 
-class MySQLAuditLogStore:
-    """Optionele MySQL-opslag. Zet AUDIT_STORAGE=mysql in .env om deze te gebruiken."""
+class AzureSQLAuditLogStore:
+    """Audit log opslag in Azure SQL Database.
+
+    Zet AUDIT_STORAGE=azure_sql in .env om deze opslag te gebruiken.
+    De tabel wordt automatisch aangemaakt als die nog niet bestaat.
+    """
 
     def __init__(self):
-        if mysql is None:
-            raise RuntimeError("mysql-connector-python is niet geïnstalleerd")
+        if pyodbc is None:
+            raise RuntimeError("pyodbc is niet geïnstalleerd")
         self._create_table_if_needed()
 
     def _connection(self):
-        return mysql.connector.connect(
-            host=os.getenv("DB_HOST"),
-            user=os.getenv("DB_USER"),
-            password=os.getenv("DB_PASSWORD"),
-            database=os.getenv("DB_NAME")
+        server = os.getenv("AZURE_SQL_SERVER")
+        database = os.getenv("AZURE_SQL_DATABASE")
+        username = os.getenv("AZURE_SQL_USERNAME")
+        password = os.getenv("AZURE_SQL_PASSWORD")
+        driver = os.getenv("AZURE_SQL_DRIVER", "ODBC Driver 18 for SQL Server")
+
+        if not all([server, database, username, password]):
+            raise RuntimeError(
+                "Azure SQL instellingen ontbreken. Controleer AZURE_SQL_SERVER, "
+                "AZURE_SQL_DATABASE, AZURE_SQL_USERNAME en AZURE_SQL_PASSWORD."
+            )
+
+        connection_string = (
+            f"DRIVER={{{driver}}};"
+            f"SERVER=tcp:{server},1433;"
+            f"DATABASE={database};"
+            f"UID={username};"
+            f"PWD={password};"
+            "Encrypt=yes;"
+            "TrustServerCertificate=no;"
+            "Connection Timeout=30;"
         )
+        return pyodbc.connect(connection_string)
 
     def _create_table_if_needed(self):
         with self._connection() as connection:
             cursor = connection.cursor()
             cursor.execute(
                 """
-                CREATE TABLE IF NOT EXISTS audit_logs (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    action VARCHAR(100) NOT NULL,
-                    description TEXT NOT NULL,
-                    performed_by VARCHAR(255) NOT NULL,
-                    target_user_id VARCHAR(255),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                IF NOT EXISTS (
+                    SELECT * FROM sysobjects
+                    WHERE name='audit_logs' AND xtype='U'
+                )
+                CREATE TABLE audit_logs (
+                    id INT IDENTITY(1,1) PRIMARY KEY,
+                    action NVARCHAR(100) NOT NULL,
+                    description NVARCHAR(MAX) NOT NULL,
+                    performed_by NVARCHAR(255) NOT NULL,
+                    target_user_id NVARCHAR(255) NULL,
+                    created_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
                 )
                 """
             )
@@ -172,17 +197,17 @@ class MySQLAuditLogStore:
 
     def list_logs(self, limit=100):
         with self._connection() as connection:
-            cursor = connection.cursor(dictionary=True)
+            cursor = connection.cursor()
             cursor.execute(
                 """
-                SELECT id, action, description, performed_by, target_user_id, created_at
+                SELECT TOP (?) id, action, description, performed_by, target_user_id, created_at
                 FROM audit_logs
                 ORDER BY created_at DESC
-                LIMIT %s
                 """,
-                (limit,)
+                int(limit)
             )
-            logs = cursor.fetchall()
+            columns = [column[0] for column in cursor.description]
+            logs = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
         for log in logs:
             if log.get("created_at"):
@@ -191,32 +216,37 @@ class MySQLAuditLogStore:
 
     def add_log(self, action, description, performed_by, target_user_id=None):
         with self._connection() as connection:
-            cursor = connection.cursor(dictionary=True)
+            cursor = connection.cursor()
             cursor.execute(
                 """
                 INSERT INTO audit_logs (action, description, performed_by, target_user_id)
-                VALUES (%s, %s, %s, %s)
+                OUTPUT INSERTED.id, INSERTED.created_at
+                VALUES (?, ?, ?, ?)
                 """,
-                (action, description, performed_by, target_user_id)
+                action,
+                description,
+                performed_by,
+                target_user_id
             )
+            row = cursor.fetchone()
             connection.commit()
-            log_id = cursor.lastrowid
 
+        created_at = row.created_at if row else datetime.now(timezone.utc)
         return {
-            "id": log_id,
+            "id": row.id if row else None,
             "action": action,
             "description": description,
             "performed_by": performed_by,
             "target_user_id": target_user_id,
-            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds")
+            "created_at": created_at.isoformat(sep=" ")
         }
 
 
 def build_audit_store():
     storage_type = os.getenv("AUDIT_STORAGE", "json").lower()
 
-    if storage_type == "mysql":
-        return MySQLAuditLogStore()
+    if storage_type in ["azure_sql", "sqlserver", "mssql"]:
+        return AzureSQLAuditLogStore()
 
     audit_log_file = os.getenv("AUDIT_LOG_FILE", "/tmp/fonteyn_audit_logs.json")
     return JsonAuditLogStore(audit_log_file)
@@ -297,6 +327,7 @@ def health_check():
         "service": "Fonteyn HR API",
         "auth": "Entra ID ready",
         "audit_storage": os.getenv("AUDIT_STORAGE", "json"),
+        "database": "Azure SQL ready",
         "audit_logs": "enabled"
     }), 200
 

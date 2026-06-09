@@ -4,20 +4,16 @@ services:
     container_name: backend_acc_app
     ports:
       - "5001:5001"
-    volumes:
-      - ./backend:/app
     env_file:
       - ./backend/.env
     networks:
       - app-network
-  
+
   frontend:
     build: ./frontend
     container_name: frontend_acc_app
     ports:
       - "5500:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html/frontend
     networks:
       - app-network
     depends_on:
